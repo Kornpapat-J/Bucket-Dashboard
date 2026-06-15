@@ -196,13 +196,17 @@ async function handleLoginSubmit(e) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   const form = document.getElementById('loginForm');
-  if (form) {
-    await DataStore.init();
+  if (!form) return;
+
+  form.addEventListener('submit', handleLoginSubmit);
+
+  try {
+    if (typeof DataStore !== 'undefined') await DataStore.init();
     const sub = document.getElementById('loginSubtitle');
     const mode = document.getElementById('loginMode');
-    if (DataStore.isCloud()) {
-      if (sub) sub.textContent = 'เข้าสู่ระบบด้วยบัญชี Supabase';
-      if (mode) mode.textContent = '☁️ โหมด Cloud — Username เช่น admin (ระบบเติม @bucket.ith ให้)';
+    if (typeof DataStore !== 'undefined' && DataStore.isCloud()) {
+      if (sub) sub.textContent = 'เข้าสู่ระบบด้วยบัญชีที่หัวหน้าอนุมัติแล้ว';
+      if (mode) mode.textContent = '☁️ โหมด Cloud — ใส่ Username ที่ลงทะเบียน (ไม่ต้องใส่ @bucket.ith)';
     } else {
       const regWrap = document.getElementById('registerLinkWrap');
       if (regWrap) regWrap.style.display = 'none';
@@ -211,8 +215,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (await Auth.isLoggedIn()) {
       const params = new URLSearchParams(window.location.search);
       window.location.replace(params.get('next') || 'index.html');
-      return;
     }
-    form.addEventListener('submit', handleLoginSubmit);
+  } catch (err) {
+    console.error('Login page init failed:', err);
+    const errEl = document.getElementById('loginError');
+    if (errEl) errEl.textContent = 'โหลดระบบไม่สมบูรณ์ — ลองรีเฟรชหน้าเว็บ';
   }
 });
