@@ -19,8 +19,8 @@ Deno.serve(async (req) => {
     const name = String(displayName || '').trim();
     const pass = String(password || '');
 
-    if (!/^[a-z0-9_]{3,20}$/.test(user)) {
-      return json({ error: 'Username ต้องเป็น a-z, 0-9, _ ความยาว 3-20 ตัว' }, 400);
+    if (!/^(?=.*[a-z])[a-z!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~._-]{3,20}$/.test(user)) {
+      return json({ error: 'Username ต้องเป็นตัวอักษร a-z ภาษาอังกฤษ อักขระพิเศษได้ ห้ามใช้ตัวเลข (3-20 ตัว)' }, 400);
     }
     if (!name || name.length < 2) return json({ error: 'กรุณากรอกชื่อ-นามสกุล' }, 400);
     if (pass.length < 6) return json({ error: 'รหัสผ่านอย่างน้อย 6 ตัว' }, 400);

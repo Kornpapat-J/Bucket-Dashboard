@@ -1,5 +1,7 @@
 /* global SUPABASE_CONFIG, LINE_CONFIG */
 
+const USERNAME_RE = /^(?=.*[a-z])[a-z!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~._-]{3,20}$/;
+
 function getFunctionsUrl(fn) {
   const base = (SUPABASE_CONFIG && SUPABASE_CONFIG.url) || '';
   return base.replace(/\/$/, '') + '/functions/v1/' + fn;
@@ -27,6 +29,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const username = form.username.value.trim().toLowerCase();
     const password = form.password.value;
     const password2 = form.password2.value;
+
+    if (!USERNAME_RE.test(username)) {
+      showErr('Username ต้องเป็นตัวอักษร a-z ภาษาอังกฤษ อักขระพิเศษได้ ห้ามใช้ตัวเลข (3-20 ตัว)');
+      return;
+    }
 
     if (password !== password2) {
       showErr('รหัสผ่านไม่ตรงกัน');
