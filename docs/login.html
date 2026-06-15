@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เข้าสู่ระบบ — ITH Bucket Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="login-page">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-logo">🪣 <span>ITH</span> Bucket Dashboard</div>
+      <h1 class="login-title">เข้าสู่ระบบ</h1>
+      <p class="login-subtitle" id="loginSubtitle">กรุณาใส่ Username และ Password เพื่อเข้าใช้งาน</p>
+
+      <form id="loginForm" class="login-form">
+        <div class="form-group">
+          <label for="loginUser">Username</label>
+          <input type="text" id="loginUser" name="username" autocomplete="username" required placeholder="เช่น ith หรือ admin">
+        </div>
+        <div class="form-group">
+          <label for="loginPass">Password</label>
+          <input type="password" id="loginPass" name="password" autocomplete="current-password" required placeholder="รหัสผ่าน">
+        </div>
+        <p class="login-error" id="loginError"></p>
+        <button type="submit" class="btn-primary login-btn">🔐 เข้าสู่ระบบ</button>
+      </form>
+
+      <p class="login-note">ข้อมูลภายในเหมือง — ห้ามแชร์ Username/Password ให้บุคคลภายนอก</p>
+    </div>
+  </div>
+
+  <script src="js/supabase-config.js"></script>
+  <script src="js/auth-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/data-store.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>

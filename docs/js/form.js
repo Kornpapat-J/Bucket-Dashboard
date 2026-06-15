@@ -201,7 +201,9 @@ function loadRecentRecords(data) {
     : '<div class="dt-empty">ยังไม่มีรายการวันนี้</div>';
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  await window.authReady;
+  document.getElementById('btnLogout')?.addEventListener('click', () => Auth.logout());
   setupTabs();
   setupOngoingToggle();
   document.getElementById('formProduction').addEventListener('submit', submitProduction);

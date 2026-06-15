@@ -444,3 +444,71 @@ body {
   .form-grid { grid-template-columns: 1fr; }
   .right-col { flex-direction: column; }
 }
+
+/* Login page */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--ith-gray-pale) 0%, #e8eaed 100%);
+  padding: 16px;
+}
+
+.login-wrap { width: 100%; max-width: 400px; }
+
+.login-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(58, 63, 68, 0.12);
+  padding: 28px 28px 24px;
+}
+
+.login-logo {
+  font-family: "Chakra Petch", Arial, sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #fff;
+  background: linear-gradient(135deg, var(--ith-charcoal), var(--ith-gray-dark));
+  border-radius: 8px;
+  padding: 8px 12px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.login-logo span { color: var(--ith-orange-light); }
+
+.login-title {
+  font-family: "Chakra Petch", Arial, sans-serif;
+  font-size: 1.25rem;
+  color: var(--ith-gray-dark);
+  margin-bottom: 4px;
+}
+
+.login-subtitle {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+
+.login-form .form-group { margin-bottom: 12px; }
+
+.login-btn { width: 100%; margin-top: 4px; padding: 12px; }
+
+.login-error {
+  color: #b85c38;
+  font-size: var(--fs-sm);
+  min-height: 20px;
+  margin: 4px 0;
+}
+
+.login-note {
+  margin-top: 16px;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.5;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
