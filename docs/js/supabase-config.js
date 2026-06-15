@@ -1,6 +1,6 @@
 // ตั้งค่า Supabase — Project: fdbudhutavcpsouszwrp
 window.SUPABASE_CONFIG = {
-  enabled: false, // เปลี่ยนเป็น true หลังใส่ anonKey ด้านล่าง
+  enabled: true,
   url: 'https://fdbudhutavcpsouszwrp.supabase.co',
-  anonKey: 'YOUR_ANON_KEY' // Project Settings → API → anon public
+  anonKey: 'sb_publishable_dyCG7l6w1svCBzuj4OFl-g_ONUbVLhK'
 };
