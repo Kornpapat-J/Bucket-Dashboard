@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>บันทึกข้อมูลการขุดดิน — Bucket Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="top-bar">
+    <div class="top-bar-left">
+      <div class="logo-box">🪣 <span>ITH</span> บันทึกข้อมูล</div>
+    </div>
+    <div class="top-bar-right">
+      <a href="index.html" class="btn-link">📊 ไปหน้า Dashboard</a>
+    </div>
+  </header>
+
+  <div class="form-page">
+    <div class="form-card">
+      <h1 class="form-title">ฟอร์มบันทึกข้อมูลการขุดดิน</h1>
+      <p class="form-subtitle">กรอกข้อมูลด้านล่างเพื่อนำไปแสดงบน Dashboard</p>
+      <div class="github-notice" id="githubNotice">
+        <strong>📌 ทำไมต้องอัปโหลดไฟล์? (เพราะยังไม่มี Server)</strong>
+        <p><strong>ตอนกรอกฟอร์ม</strong> → ข้อมูลเก็บในเครื่องคุณคนเดียว (เหมือนบันทึกในโน้ตส่วนตัว) คนอื่นเปิด Dashboard จะยังไม่เห็น</p>
+        <p><strong>ตอนอัปโหลด records.json ขึ้น GitHub</strong> → ข้อมูลไปอยู่บนเว็บร่วมกัน ทุกคนเปิด Dashboard จะเห็นเหมือนกัน</p>
+        <details class="upload-steps">
+          <summary>📖 วิธีอัปโหลดทีละขั้น (คลิกเปิด)</summary>
+          <ol>
+            <li>กรอกข้อมูลในฟอร์ม แล้วกด <strong>บันทึก</strong> ตามปกติ</li>
+            <li>กดปุ่ม <strong>⬇️ ดาวน์โหลด records.json</strong> ด้านล่าง → ไฟล์จะลงเครื่องคุณ</li>
+            <li>เปิด GitHub → เข้า repo ของโปรเจกต์</li>
+            <li>ไปที่โฟลเดอร์ <code>docs</code> → <code>data</code> → คลิกไฟล์ <code>records.json</code></li>
+            <li>กดปุ่ม ✏️ <strong>Edit</strong> (แก้ไข)</li>
+            <li>ลบเนื้อหาเดิมทั้งหมด แล้วเปิดไฟล์ที่ดาวน์โหลดมา คัดลอกวางแทน</li>
+            <li>กด <strong>Commit changes</strong> ด้านล่าง</li>
+            <li>รอ 1–2 นาที แล้ว Refresh หน้า Dashboard — ทุกคนจะเห็นข้อมูลใหม่</li>
+          </ol>
+        </details>
+        <div class="form-actions" style="margin-top:8px">
+          <button type="button" class="btn-primary" id="btnExportJson">⬇️ ดาวน์โหลด records.json</button>
+          <button type="button" class="btn-secondary" id="btnClearLocal">🗑️ ล้างข้อมูลชั่วคราวในเครื่อง</button>
+        </div>
+        <p class="local-count" id="localCount"></p>
+      </div>
+
+      <div class="form-tabs">
+        <button class="form-tab active" data-tab="production">🪣 บันทึกการขุดดิน</button>
+        <button class="form-tab" data-tab="downtime">⏰ บันทึก Downtime</button>
+      </div>
+
+      <!-- Production Form -->
+      <div id="panelProduction">
+        <form id="formProduction">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="prodDate">วันที่ *</label>
+              <input type="date" id="prodDate" name="date" required>
+            </div>
+            <div class="form-group">
+              <label for="prodShift">กะงาน *</label>
+              <select id="prodShift" name="shift" required>
+                <option value="day">☀️ กะกลางวัน (Day)</option>
+                <option value="night">🌙 กะกลางคืน (Night)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="prodBucket">หมายเลข Bucket *</label>
+              <select id="prodBucket" name="bucketId" required></select>
+            </div>
+            <div class="form-group">
+              <label for="prodOperator">ชื่อพนักงาน/ผู้ปฏิบัติงาน *</label>
+              <input type="text" id="prodOperator" name="operatorName" placeholder="เช่น สมชาย ใจดี" required>
+            </div>
+            <div class="form-group">
+              <label for="prodStart">เวลาเริ่ม *</label>
+              <input type="time" id="prodStart" name="startTime" required>
+            </div>
+            <div class="form-group">
+              <label for="prodEnd">เวลาสิ้นสุด *</label>
+              <input type="time" id="prodEnd" name="endTime" required>
+            </div>
+            <div class="form-group">
+              <label for="prodVolume">ปริมาณขุด (BCM) *</label>
+              <input type="number" id="prodVolume" name="volumeBCM" min="0" step="0.1" placeholder="เช่น 380" required>
+            </div>
+            <div class="form-group">
+              <label for="prodLocation">โซน/ตำแหน่ง</label>
+              <input type="text" id="prodLocation" name="location" placeholder="เช่น Zone A">
+            </div>
+            <div class="form-group full">
+              <label for="prodNote">หมายเหตุ</label>
+              <textarea id="prodNote" name="note" placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">💾 บันทึกการขุดดิน</button>
+            <button type="reset" class="btn-secondary">ล้างฟอร์ม</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Downtime Form -->
+      <div id="panelDowntime" style="display:none">
+        <form id="formDowntime">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="dtDate">วันที่ *</label>
+              <input type="date" id="dtDate" name="date" required>
+            </div>
+            <div class="form-group">
+              <label for="dtShift">กะงาน *</label>
+              <select id="dtShift" name="shift" required>
+                <option value="day">☀️ กะกลางวัน (Day)</option>
+                <option value="night">🌙 กะกลางคืน (Night)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="dtBucket">หมายเลข Bucket *</label>
+              <select id="dtBucket" name="bucketId" required></select>
+            </div>
+            <div class="form-group">
+              <label for="dtType">ประเภท Downtime *</label>
+              <select id="dtType" name="type" required>
+                <option value="OPT">OPT — รอ/หยุดปฏิบัติการ</option>
+                <option value="EE">EE — ไฟฟ้า</option>
+                <option value="ME">ME — ซ่อมบำรุง</option>
+                <option value="Plan">Plan — ตามแผน</option>
+                <option value="Uncontrol">Uncontrol — ไม่สามารถควบคุมได้</option>
+                <option value="STB">STB — ความปลอดภัย</option>
+                <option value="PM">PM — บำรุงรักษา</option>
+                <option value="Other">Other — อื่นๆ</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="dtStart">เวลาเริ่ม *</label>
+              <input type="time" id="dtStart" name="startTime" required>
+            </div>
+            <div class="form-group">
+              <label for="dtEndTime">เวลาสิ้นสุด</label>
+              <input type="time" id="dtEndTime" name="endTime">
+              <div class="form-check">
+                <input type="checkbox" id="dtOngoing" name="ongoing">
+                <label for="dtOngoing">กำลังดำเนินการ (ยังไม่ทราบเวลาสิ้นสุด)</label>
+              </div>
+            </div>
+            <div class="form-group full">
+              <label for="dtDesc">รายละเอียด *</label>
+              <textarea id="dtDesc" name="description" placeholder="อธิบายสาเหตุ Downtime เช่น รอรถบรรทุก, เปลี่ยนชิ้นส่วน" required></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">💾 บันทึก Downtime</button>
+            <button type="reset" class="btn-secondary">ล้างฟอร์ม</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="recent-list">
+        <h3>📋 รายการที่บันทึกวันนี้ — การขุดดิน</h3>
+        <div id="recentProduction"></div>
+        <h3 style="margin-top:12px">📋 รายการที่บันทึกวันนี้ — Downtime</h3>
+        <div id="recentDowntime"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/utils.js"></script>
+  <script src="js/form.js"></script>
+</body>
+</html>

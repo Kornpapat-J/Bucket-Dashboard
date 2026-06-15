@@ -1,0 +1,424 @@
+/* global Chart, API, formatDateTH, toISODate, calcDuration, formatDuration, filterByShift,
+   aggregateHourly, getHourLabels, hourLabelToNum, calcWorkingHours, sumByBucket,
+   sumDowntimeByBucket, sumDowntimeByType, getBucketColor, fmtNum, DT_TYPES */
+
+let state = {
+  date: toISODate(new Date()),
+  shift: 'all',
+  dtFilter: 'All',
+  config: {},
+  production: [],
+  downtime: [],
+  charts: {}
+};
+
+const REFRESH_SEC = 120;
+let countdown = REFRESH_SEC;
+let countdownTimer = null;
+
+async function loadData() {
+  try {
+    const data = await API.getByDate(state.date);
+    state.production = data.production;
+    state.downtime = data.downtime;
+    state.config = data.config || {};
+    renderAll();
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function getFilteredProduction() {
+  return filterByShift(state.production, state.shift);
+}
+
+function getFilteredDowntime() {
+  let items = filterByShift(state.downtime, state.shift);
+  if (state.dtFilter !== 'All') items = items.filter(d => d.type === state.dtFilter);
+  return items;
+}
+
+function renderAll() {
+  renderBarChart();
+  renderLineChart();
+  renderPieChart();
+  renderDonut();
+  renderRadarBuckets();
+  renderRadarTypes();
+  renderDowntimeTable();
+  updateBadges();
+}
+
+function updateBadges() {
+  const prod = getFilteredProduction();
+  const dt = filterByShift(state.downtime, state.shift);
+  const totalBCM = prod.reduce((s, r) => s + (r.volumeBCM || 0), 0);
+  const workHrs = calcWorkingHours(prod);
+  const productivity = workHrs > 0 ? Math.round(totalBCM / workHrs) : 0;
+
+  document.getElementById('productivityBadge').textContent = productivity > 0 ? `${fmtNum(productivity)} BCM/Hr` : '—';
+  document.getElementById('dtCount').textContent = `${dt.length} records`;
+  const ongoing = dt.filter(d => d.ongoing).length;
+  document.getElementById('dtOngoing').textContent = `${ongoing} Ongoing`;
+}
+
+function renderBarChart() {
+  const prod = getFilteredProduction();
+  const buckets = state.config.buckets || [...new Set(prod.map(p => p.bucketId))];
+  const hourly = aggregateHourly(prod);
+  const labels = getHourLabels();
+  const target = state.config.hourlyTarget || 400;
+
+  const datasets = buckets.map(b => ({
+    label: b,
+    data: labels.map(l => {
+      const h = hourLabelToNum(l);
+      return (hourly[h] && hourly[h][b]) || 0;
+    }),
+    backgroundColor: getBucketColor(b, buckets),
+    stack: 'prod'
+  }));
+
+  const ctx = document.getElementById('barChart');
+  if (state.charts.bar) state.charts.bar.destroy();
+
+  state.charts.bar = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        annotation: undefined
+      },
+      scales: {
+        x: { stacked: true, ticks: { font: { size: 9 }, maxRotation: 45 } },
+        y: { stacked: true, beginAtZero: true, title: { display: true, text: 'BCM' } }
+      }
+    },
+    plugins: [{
+      id: 'targetLine',
+      afterDraw(chart) {
+        const { ctx: c, chartArea, scales } = chart;
+        if (!chartArea) return;
+        const y = scales.y.getPixelForValue(target);
+        c.save();
+        c.strokeStyle = '#e8873a';
+        c.setLineDash([6, 4]);
+        c.lineWidth = 2;
+        c.beginPath();
+        c.moveTo(chartArea.left, y);
+        c.lineTo(chartArea.right, y);
+        c.stroke();
+        c.fillStyle = '#e8873a';
+        c.font = 'bold 10px Chakra Petch';
+        c.fillText(`Target ${fmtNum(target)} BCM/Hr`, chartArea.right - 120, y - 4);
+        c.restore();
+      }
+    }]
+  });
+
+  const legend = document.getElementById('barLegend');
+  legend.innerHTML = buckets.map(b =>
+    `<span class="legend-item"><span class="legend-dot" style="background:${getBucketColor(b, buckets)}"></span>${b}</span>`
+  ).join('');
+}
+
+function renderLineChart() {
+  const prod = getFilteredProduction();
+  const hourly = aggregateHourly(prod);
+  const labels = getHourLabels();
+  const data = labels.map(l => {
+    const h = hourLabelToNum(l);
+    if (!hourly[h]) return 0;
+    return Object.values(hourly[h]).reduce((s, v) => s + v, 0);
+  });
+
+  const ctx = document.getElementById('lineChart');
+  if (state.charts.line) state.charts.line.destroy();
+
+  state.charts.line = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Total BCM/Hr',
+        data,
+        borderColor: '#e8873a',
+        backgroundColor: 'rgba(232, 135, 58, 0.1)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { font: { size: 9 }, maxRotation: 45 } },
+        y: { beginAtZero: true }
+      }
+    }
+  });
+}
+
+function renderPieChart() {
+  const prod = getFilteredProduction();
+  const byBucket = sumByBucket(prod);
+  const buckets = Object.keys(byBucket);
+  const values = buckets.map(b => byBucket[b]);
+  const total = values.reduce((s, v) => s + v, 0);
+  const workHrs = calcWorkingHours(prod);
+  const productivity = workHrs > 0 ? Math.round(total / workHrs) : 0;
+  const target = state.config.dailyTarget || 5000;
+
+  document.getElementById('totalProduction').textContent = total > 0 ? `${fmtNum(total)} BCM` : '—';
+  document.getElementById('workingHours').textContent = workHrs > 0 ? `${workHrs.toFixed(1)} Hr.` : '—';
+  document.getElementById('productivityTotal').textContent = productivity > 0 ? `${fmtNum(productivity)} BCM/Hr` : '—';
+  document.getElementById('dailyTarget').textContent = `${fmtNum(target)} BCM/Day`;
+
+  const legendEl = document.getElementById('pieLegend');
+  legendEl.innerHTML = buckets.map((b, i) =>
+    `<div class="pie-legend-item"><span class="pie-legend-left"><span class="pie-legend-dot" style="background:${getBucketColor(b, state.config.buckets || buckets)}"></span>${b}</span><span>${fmtNum(byBucket[b])} BCM</span></div>`
+  ).join('') || '<div class="dt-empty">ไม่มีข้อมูล</div>';
+
+  const ctx = document.getElementById('pieChart');
+  if (state.charts.pie) state.charts.pie.destroy();
+  if (buckets.length === 0) return;
+
+  state.charts.pie = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: buckets,
+      datasets: [{
+        data: values,
+        backgroundColor: buckets.map(b => getBucketColor(b, state.config.buckets || buckets)),
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '55%',
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  renderDonut(total, target);
+}
+
+function renderDonut(actual, target) {
+  const pct = target > 0 ? Math.min(100, (actual / target) * 100) : 0;
+  const gap = target - actual;
+
+  document.getElementById('donutPct').textContent = `${pct.toFixed(1)}%`;
+  document.getElementById('donutActual').textContent = `${fmtNum(actual)} BCM`;
+  document.getElementById('donutTarget').textContent = `${fmtNum(target)} BCM`;
+  const gapEl = document.getElementById('donutGap');
+  gapEl.textContent = gap > 0 ? `${fmtNum(gap)} BCM BELOW TARGET` : `${fmtNum(Math.abs(gap))} BCM ABOVE TARGET`;
+  gapEl.className = 'donut-stat-val ' + (gap > 0 ? 'red' : 'green');
+
+  const ctx = document.getElementById('donutChart');
+  if (state.charts.donut) state.charts.donut.destroy();
+
+  state.charts.donut = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      datasets: [{
+        data: [pct, Math.max(0, 100 - pct)],
+        backgroundColor: ['#e8873a', '#e8eaed'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '72%',
+      plugins: { legend: { display: false }, tooltip: { enabled: false } }
+    }
+  });
+}
+
+function renderRadarBuckets() {
+  const dt = filterByShift(state.downtime, state.shift);
+  const byBucket = sumDowntimeByBucket(dt);
+  const buckets = Object.keys(byBucket);
+  const totalEvents = dt.length;
+  const totalMin = dt.reduce((s, r) => s + calcDuration(r.startTime, r.endTime, r.ongoing), 0);
+
+  document.getElementById('radarBucketTotal').textContent = `Total: ${totalEvents} events`;
+  document.getElementById('radarBucketDur').textContent = `⏱ ${formatDuration(totalMin)} รวม Downtime`;
+
+  const legend = document.getElementById('radarBucketLegend');
+  legend.innerHTML = buckets.map(b =>
+    `<div class="radar-legend-item"><span class="radar-legend-left"><span class="radar-legend-dot" style="background:${getBucketColor(b, state.config.buckets || buckets)}"></span><span>${b}</span></span><span>${byBucket[b].count}</span><span class="radar-legend-dur">${formatDuration(byBucket[b].minutes)}</span></div>`
+  ).join('') || '<div class="dt-empty">ไม่มี Downtime</div>';
+
+  const ctx = document.getElementById('radarBucketChart');
+  if (state.charts.radarBucket) state.charts.radarBucket.destroy();
+  if (buckets.length === 0) return;
+
+  state.charts.radarBucket = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: buckets,
+      datasets: [{
+        label: 'Downtime (min)',
+        data: buckets.map(b => byBucket[b].minutes),
+        backgroundColor: 'rgba(232, 135, 58, 0.2)',
+        borderColor: '#e8873a',
+        pointBackgroundColor: '#c86f28'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { r: { beginAtZero: true, ticks: { display: false } } }
+    }
+  });
+}
+
+function renderRadarTypes() {
+  const dt = filterByShift(state.downtime, state.shift);
+  const byType = sumDowntimeByType(dt);
+  const types = Object.keys(byType);
+  const totalMin = dt.reduce((s, r) => s + calcDuration(r.startTime, r.endTime, r.ongoing), 0);
+
+  document.getElementById('radarTypeTotal').textContent = `Total: ${dt.length} events`;
+  document.getElementById('radarTypeDur').textContent = `⏱ ${formatDuration(totalMin)} รวม Downtime`;
+
+  const legend = document.getElementById('radarTypeLegend');
+  legend.innerHTML = types.map(t =>
+    `<div class="radar-legend-item"><span class="radar-legend-left"><span>${t}</span></span><span>${byType[t].count}</span><span class="radar-legend-dur">${formatDuration(byType[t].minutes)}</span></div>`
+  ).join('') || '<div class="dt-empty">ไม่มี Downtime</div>';
+
+  const ctx = document.getElementById('radarTypeChart');
+  if (state.charts.radarType) state.charts.radarType.destroy();
+  if (types.length === 0) return;
+
+  state.charts.radarType = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: types,
+      datasets: [{
+        label: 'Downtime (min)',
+        data: types.map(t => byType[t].minutes),
+        backgroundColor: 'rgba(107, 114, 128, 0.2)',
+        borderColor: '#6b7280',
+        pointBackgroundColor: '#4a4f54'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { r: { beginAtZero: true, ticks: { display: false } } }
+    }
+  });
+}
+
+function renderDowntimeTable() {
+  const dt = getFilteredDowntime();
+  const tbody = document.getElementById('dtTableBody');
+  if (dt.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="dt-empty">ไม่มีข้อมูล Downtime สำหรับวันที่เลือก</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = dt.map(r => {
+    const shiftBadge = r.shift === 'night'
+      ? '<span class="shift-badge shift-badge-n">🌙 Night</span>'
+      : '<span class="shift-badge shift-badge-d">☀️ Day</span>';
+    const endCell = r.ongoing
+      ? '<span class="end-unknown" title="กำลังดำเนินการ">?</span>'
+      : `<span class="time-cell">${r.endTime || '—'}</span>`;
+    const dur = calcDuration(r.startTime, r.endTime, r.ongoing);
+    const rowClass = r.ongoing ? 'row-no-end' : '';
+    return `<tr class="${rowClass}">
+      <td class="machine-cell">${r.bucketId}</td>
+      <td>${shiftBadge}</td>
+      <td class="time-cell">${r.startTime}</td>
+      <td>${endCell}</td>
+      <td class="desc-cell">${r.description || '—'}</td>
+      <td><span class="type-badge type-${r.type}">${r.type}</span></td>
+      <td class="dur-cell">${formatDuration(dur)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function setupShiftButtons() {
+  document.querySelectorAll('.btn-shift').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.shift = btn.dataset.shift;
+      document.querySelectorAll('.btn-shift').forEach(b => {
+        b.classList.remove('active-all', 'active-day', 'active-night');
+      });
+      if (state.shift === 'all') btn.classList.add('active-all');
+      else if (state.shift === 'day') btn.classList.add('active-day');
+      else btn.classList.add('active-night');
+      renderAll();
+    });
+  });
+}
+
+function setupDtFilters() {
+  document.querySelectorAll('.dt-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.dtFilter = btn.dataset.filter;
+      document.querySelectorAll('.dt-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderDowntimeTable();
+    });
+  });
+}
+
+function setupDateNav() {
+  const input = document.getElementById('dateInput');
+  input.value = state.date;
+  input.addEventListener('change', () => {
+    state.date = input.value;
+    loadData();
+  });
+  document.getElementById('btnPrevDate').addEventListener('click', () => {
+    const d = new Date(state.date + 'T00:00:00');
+    d.setDate(d.getDate() - 1);
+    state.date = toISODate(d);
+    input.value = state.date;
+    loadData();
+  });
+  document.getElementById('btnNextDate').addEventListener('click', () => {
+    const d = new Date(state.date + 'T00:00:00');
+    d.setDate(d.getDate() + 1);
+    state.date = toISODate(d);
+    input.value = state.date;
+    loadData();
+  });
+  document.getElementById('btnRefresh').addEventListener('click', () => {
+    countdown = REFRESH_SEC;
+    loadData();
+  });
+}
+
+function startAutoRefresh() {
+  countdownTimer = setInterval(() => {
+    countdown--;
+    document.getElementById('countdown').textContent = `${Math.floor(countdown / 60)}:${String(countdown % 60).padStart(2, '0')}`;
+    if (countdown <= 0) {
+      countdown = REFRESH_SEC;
+      loadData();
+    }
+  }, 1000);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  setupShiftButtons();
+  setupDtFilters();
+  setupDateNav();
+  loadData();
+  startAutoRefresh();
+  document.getElementById('footerTime').textContent = `อัปเดตล่าสุด: ${new Date().toLocaleString('th-TH')}`;
+});

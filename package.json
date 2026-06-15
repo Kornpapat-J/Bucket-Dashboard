@@ -1,0 +1,13 @@
+{
+  "name": "bucket-excavation-dashboard",
+  "version": "1.0.0",
+  "description": "Dashboard การขุดดิน Bucket พร้อมฟอร์มบันทึกข้อมูลพนักงาน",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

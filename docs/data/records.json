@@ -1,0 +1,112 @@
+{
+  "config": {
+    "dailyTarget": 5000,
+    "hourlyTarget": 400,
+    "buckets": ["Bucket 1", "Bucket 2", "Bucket 3", "Bucket 4", "Bucket 5"]
+  },
+  "production": [
+    {
+      "id": "demo-p1",
+      "date": "2026-06-15",
+      "shift": "day",
+      "bucketId": "Bucket 1",
+      "operatorName": "สมชาย ใจดี",
+      "startTime": "08:00",
+      "endTime": "09:00",
+      "volumeBCM": 380,
+      "location": "Zone A",
+      "note": "",
+      "createdAt": "2026-06-15T08:30:00.000Z"
+    },
+    {
+      "id": "demo-p2",
+      "date": "2026-06-15",
+      "shift": "day",
+      "bucketId": "Bucket 2",
+      "operatorName": "วิชัย รักงาน",
+      "startTime": "08:00",
+      "endTime": "09:00",
+      "volumeBCM": 420,
+      "location": "Zone B",
+      "note": "",
+      "createdAt": "2026-06-15T08:35:00.000Z"
+    },
+    {
+      "id": "demo-p3",
+      "date": "2026-06-15",
+      "shift": "day",
+      "bucketId": "Bucket 1",
+      "operatorName": "สมชาย ใจดี",
+      "startTime": "09:00",
+      "endTime": "10:00",
+      "volumeBCM": 350,
+      "location": "Zone A",
+      "note": "",
+      "createdAt": "2026-06-15T09:30:00.000Z"
+    },
+    {
+      "id": "demo-p4",
+      "date": "2026-06-15",
+      "shift": "day",
+      "bucketId": "Bucket 3",
+      "operatorName": "ประเสริฐ มั่นคง",
+      "startTime": "08:00",
+      "endTime": "10:00",
+      "volumeBCM": 720,
+      "location": "Zone C",
+      "note": "",
+      "createdAt": "2026-06-15T09:00:00.000Z"
+    },
+    {
+      "id": "demo-p5",
+      "date": "2026-06-15",
+      "shift": "day",
+      "bucketId": "Bucket 2",
+      "operatorName": "วิชัย รักงาน",
+      "startTime": "10:00",
+      "endTime": "11:00",
+      "volumeBCM": 410,
+      "location": "Zone B",
+      "note": "",
+      "createdAt": "2026-06-15T10:30:00.000Z"
+    }
+  ],
+  "downtime": [
+    {
+      "id": "demo-d1",
+      "date": "2026-06-15",
+      "shift": "day",
+      "bucketId": "Bucket 2",
+      "startTime": "09:15",
+      "endTime": "09:50",
+      "type": "ME",
+      "description": "เปลี่ยนชิ้นส่วน Bucket ชำรุด",
+      "ongoing": false,
+      "createdAt": "2026-06-15T09:20:00.000Z"
+    },
+    {
+      "id": "demo-d2",
+      "date": "2026-06-15",
+      "shift": "day",
+      "bucketId": "Bucket 4",
+      "startTime": "10:30",
+      "endTime": "",
+      "type": "OPT",
+      "description": "รอรถบรรทุก",
+      "ongoing": true,
+      "createdAt": "2026-06-15T10:35:00.000Z"
+    },
+    {
+      "id": "demo-d3",
+      "date": "2026-06-15",
+      "shift": "day",
+      "bucketId": "Bucket 1",
+      "startTime": "11:00",
+      "endTime": "11:20",
+      "type": "Plan",
+      "description": "พักเบรกตามแผน",
+      "ongoing": false,
+      "createdAt": "2026-06-15T11:05:00.000Z"
+    }
+  ]
+}

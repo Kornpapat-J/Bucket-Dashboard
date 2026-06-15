@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bucket Excavation Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="top-bar">
+    <div class="top-bar-left">
+      <div class="logo-box">🪣 <span>BUCKET</span> Dashboard</div>
+    </div>
+    <div class="top-bar-right controls">
+      <div class="auto-refresh-wrap">
+        <span class="auto-refresh-label">Auto</span>
+        <span class="countdown-txt" id="countdown">2:00</span>
+      </div>
+      <div class="shift-group">
+        <span class="ctrl-label">Shift</span>
+        <button class="btn-shift active-all" data-shift="all">☀️🌙</button>
+        <button class="btn-shift" data-shift="day">☀️</button>
+        <button class="btn-shift" data-shift="night">🌙</button>
+      </div>
+      <span class="ctrl-label">Date</span>
+      <button class="btn-nav" id="btnPrevDate">‹</button>
+      <input type="date" class="date-select" id="dateInput">
+      <button class="btn-nav" id="btnNextDate">›</button>
+      <button class="btn-refresh" id="btnRefresh">Refresh</button>
+      <a href="/form.html" class="btn-link">📝 บันทึกข้อมูล</a>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="body-row">
+      <div class="left-col">
+        <!-- Bar Chart -->
+        <div class="card">
+          <div class="bar-head-row">
+            <div class="card-head">🪣⚙️ Bucket Production Per Hour</div>
+            <div class="bar-productivity-badge">
+              <span class="bar-productivity-label">Productivity:</span>
+              <span class="bar-productivity-value" id="productivityBadge">—</span>
+            </div>
+          </div>
+          <div class="bar-chart-wrap">
+            <canvas id="barChart"></canvas>
+          </div>
+          <div class="legend" id="barLegend"></div>
+        </div>
+
+        <!-- Line Chart -->
+        <div class="card perf-card">
+          <div class="card-head red">📈 Total Production Trend</div>
+          <div class="perf-chart-wrap">
+            <canvas id="lineChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Downtime Table -->
+        <div class="card dt-table-card">
+          <div class="dt-table-header">
+            <div class="card-head teal" style="margin:0">⏰📝 Downtime Detail</div>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+              <span class="dt-count-badge" id="dtCount">— records</span>
+              <span class="dt-ongoing-badge" id="dtOngoing">0 Ongoing</span>
+            </div>
+          </div>
+          <div class="dt-filter-wrap">
+            <button class="dt-filter-btn active" data-filter="All">All</button>
+            <button class="dt-filter-btn type-OPT" data-filter="OPT">OPT</button>
+            <button class="dt-filter-btn type-EE" data-filter="EE">EE</button>
+            <button class="dt-filter-btn type-ME" data-filter="ME">ME</button>
+            <button class="dt-filter-btn type-Plan" data-filter="Plan">Plan</button>
+            <button class="dt-filter-btn type-Uncontrol" data-filter="Uncontrol">Uncontrol</button>
+            <button class="dt-filter-btn type-Other" data-filter="Other">Other</button>
+          </div>
+          <div class="dt-table-wrap" style="margin-top:6px">
+            <table class="dt-table">
+              <thead>
+                <tr>
+                  <th>Bucket Name</th>
+                  <th>Shift</th>
+                  <th>Start Time</th>
+                  <th>End Time</th>
+                  <th>Description</th>
+                  <th>Type</th>
+                  <th>Duration</th>
+                </tr>
+              </thead>
+              <tbody id="dtTableBody">
+                <tr><td colspan="7" class="dt-empty">กำลังโหลดข้อมูล…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="right-col">
+        <!-- Pie Chart -->
+        <div class="card pie-card">
+          <div class="pie-title">📊🪣 Total Production of Each Bucket</div>
+          <div class="pie-body">
+            <div class="pie-wrap"><canvas id="pieChart"></canvas></div>
+            <div class="pie-right">
+              <div class="pie-legend" id="pieLegend"></div>
+              <div class="totals-row">
+                <div class="total-box"><span class="total-label">total production:</span><span class="total-value" id="totalProduction">—</span></div>
+                <div class="total-box"><span class="total-label">working hours:</span><span class="total-value" id="workingHours">—</span></div>
+                <div class="total-box productivity-card"><span class="total-label">productivity:</span><span class="total-value" id="productivityTotal">—</span></div>
+                <div class="total-box target-card"><span class="total-label">target:</span><span class="target-value" id="dailyTarget">5,000 BCM/Day</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="donut-section">
+            <div class="donut-inner">
+              <div class="donut-wrap">
+                <canvas id="donutChart"></canvas>
+                <div class="donut-center">
+                  <div class="donut-pct" id="donutPct">—%</div>
+                  <div class="donut-sub">Achievement</div>
+                </div>
+              </div>
+              <div class="donut-info">
+                <div class="donut-title">🎯 Target Achievement</div>
+                <div class="donut-stat"><span class="donut-stat-label">Actual</span><span class="donut-stat-val" id="donutActual">—</span></div>
+                <div class="donut-stat"><span class="donut-stat-label">Target</span><span class="donut-stat-val orange" id="donutTarget">—</span></div>
+                <div class="donut-stat"><span class="donut-stat-label">Gap</span><span class="donut-stat-val red" id="donutGap">—</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Radar - Bucket Downtime -->
+        <div class="card radar-card">
+          <div class="radar-title">⏰📝 Downtime of Equipment</div>
+          <div class="radar-hint">👆 คลิกชื่อ Bucket เพื่อดู Downtime Detail</div>
+          <div class="radar-body">
+            <div class="radar-wrap"><canvas id="radarBucketChart"></canvas></div>
+            <div class="radar-legend" id="radarBucketLegend"></div>
+          </div>
+          <div class="radar-total" id="radarBucketTotal">Total: — events</div>
+          <div class="radar-total" id="radarBucketDur">⏱ — รวม Downtime</div>
+        </div>
+
+        <!-- Radar - Type Downtime -->
+        <div class="card radar-card">
+          <div class="radar-title">⚔️⏰ Type of Downtime</div>
+          <div class="radar-hint">👆 คลิก Type เพื่อดู Downtime Detail</div>
+          <div class="radar-body">
+            <div class="radar-wrap"><canvas id="radarTypeChart"></canvas></div>
+            <div class="radar-legend" id="radarTypeLegend"></div>
+          </div>
+          <div class="radar-total" id="radarTypeTotal">Total: — events</div>
+          <div class="radar-total" id="radarTypeDur">⏱ — รวม Downtime</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <span class="footer-txt">Bucket Excavation Dashboard — รายงานการขุดดินรายวัน</span>
+    <span class="footer-txt" id="footerTime"></span>
+  </footer>
+
+  <script src="/js/utils.js"></script>
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>
