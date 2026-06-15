@@ -501,6 +501,14 @@ body {
   font-size: var(--fs-sm);
   min-height: 20px;
   margin: 4px 0;
+  line-height: 1.4;
+}
+
+.login-mode {
+  font-size: var(--fs-xs);
+  color: var(--ith-orange);
+  margin-bottom: 12px;
+  font-weight: 600;
 }
 
 .login-note {

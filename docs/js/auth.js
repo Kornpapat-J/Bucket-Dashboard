@@ -82,7 +82,12 @@ const Auth = {
       const client = await this.getClient();
       const email = this.toEmail(user);
       const { data, error } = await client.auth.signInWithPassword({ email, password });
-      if (error) throw new Error('Username หรือ Password ไม่ถูกต้อง');
+      if (error) {
+        if (error.message?.includes('Invalid login credentials') || error.code === 'invalid_credentials') {
+          throw new Error('ไม่พบบัญชีนี้ใน Supabase — สร้าง user ที่ Authentication → Users (Email: ' + email + ', ติ๊ก Auto Confirm)');
+        }
+        throw new Error(error.message || 'Username หรือ Password ไม่ถูกต้อง');
+      }
       sessionStorage.setItem('bucket_auth_user', data.user.email.split('@')[0]);
       return { user: data.user.email };
     }
@@ -143,8 +148,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (form) {
     await DataStore.init();
     const sub = document.getElementById('loginSubtitle');
-    if (sub && DataStore.isCloud()) {
-      sub.textContent = 'เข้าสู่ระบบด้วยบัญชี Supabase (Username ที่สร้างไว้ใน Dashboard)';
+    const mode = document.getElementById('loginMode');
+    if (DataStore.isCloud()) {
+      if (sub) sub.textContent = 'เข้าสู่ระบบด้วยบัญชี Supabase';
+      if (mode) mode.textContent = '☁️ โหมด Cloud — Username เช่น admin (ระบบเติม @bucket.ith ให้)';
+    } else if (mode) {
+      mode.textContent = '🔒 โหมดทดสอบ — Username: ith';
     }
     if (await Auth.isLoggedIn()) {
       const params = new URLSearchParams(window.location.search);
