@@ -418,6 +418,9 @@ function startAutoRefresh() {
 document.addEventListener('DOMContentLoaded', async () => {
   await window.authReady;
   document.getElementById('btnLogout')?.addEventListener('click', () => Auth.logout());
+  if (!Auth.isAdmin()) {
+    document.querySelector('a[href="form.html"]')?.remove();
+  }
   await DataStore.init();
   setupShiftButtons();
   setupDtFilters();

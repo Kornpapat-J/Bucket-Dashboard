@@ -1,3 +1,5 @@
+const LOCAL_KEY = 'bucket_dashboard_local'; // used by data-store.js fallback
+
 function genId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }

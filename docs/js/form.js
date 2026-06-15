@@ -202,7 +202,7 @@ function loadRecentRecords(data) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await window.authReady;
+  await Auth.requireAdmin('index.html');
   document.getElementById('btnLogout')?.addEventListener('click', () => Auth.logout());
   setupTabs();
   setupOngoingToggle();

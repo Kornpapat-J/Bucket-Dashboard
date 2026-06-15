@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ลงทะเบียน — ITH Bucket Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="login-page">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-logo">🪣 <span>ITH</span> Bucket Dashboard</div>
+      <h1 class="login-title">ลงทะเบียน</h1>
+      <p class="login-subtitle">กรอกข้อมูลเพื่อขอสิทธิ์ใช้งาน — หัวหน้างานจะอนุมัติผ่าน LINE</p>
+
+      <form id="registerForm" class="login-form">
+        <div class="form-group">
+          <label for="displayName">ชื่อ-นามสกุล</label>
+          <input type="text" id="displayName" name="displayName" required placeholder="เช่น สมชาย ใจดี">
+        </div>
+        <div class="form-group">
+          <label for="regUser">Username</label>
+          <input type="text" id="regUser" name="username" required pattern="[a-z0-9_]{3,20}" placeholder="a-z, ตัวเลข, _ (3-20 ตัว)">
+        </div>
+        <div class="form-group">
+          <label for="regPass">Password</label>
+          <input type="password" id="regPass" name="password" required minlength="6" placeholder="อย่างน้อย 6 ตัว">
+        </div>
+        <div class="form-group">
+          <label for="regPass2">ยืนยัน Password</label>
+          <input type="password" id="regPass2" name="password2" required minlength="6" placeholder="พิมพ์รหัสผ่านอีกครั้ง">
+        </div>
+        <p class="login-error" id="registerError"></p>
+        <p class="login-success" id="registerSuccess"></p>
+        <button type="submit" class="btn-primary login-btn">📩 ส่งคำขอลงทะเบียน</button>
+      </form>
+
+      <p class="login-footer-link">มีบัญชีแล้ว? <a href="login.html">เข้าสู่ระบบ</a></p>
+      <p class="login-note">หลังส่งคำขอ หัวหน้างานจะได้รับแจ้งเตือนใน LINE เพื่อเลือกสิทธิ์ User หรือ Admin</p>
+    </div>
+  </div>
+
+  <script src="js/supabase-config.js"></script>
+  <script src="js/line-config.js"></script>
+  <script src="js/auth-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/data-store.js"></script>
+  <script src="js/register.js"></script>
+</body>
+</html>

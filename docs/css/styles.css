@@ -520,3 +520,44 @@ body {
   border-top: 1px solid var(--border);
   padding-top: 12px;
 }
+
+.login-footer-link {
+  margin-top: 14px;
+  text-align: center;
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.login-footer-link a {
+  color: var(--ith-orange);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.login-footer-link a:hover { text-decoration: underline; }
+
+.login-success {
+  color: #2d6a4f;
+  font-size: var(--fs-sm);
+  min-height: 20px;
+  margin: 4px 0;
+  line-height: 1.4;
+}
+
+.approve-card { max-width: 420px; }
+
+.approve-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.approve-actions .login-btn {
+  text-align: center;
+  text-decoration: none;
+  display: block;
+  box-sizing: border-box;
+}
+
+.approve-admin { background: var(--ith-gray-dark) !important; }

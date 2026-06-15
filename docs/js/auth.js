@@ -84,11 +84,12 @@ const Auth = {
       const { data, error } = await client.auth.signInWithPassword({ email, password });
       if (error) {
         if (error.message?.includes('Invalid login credentials') || error.code === 'invalid_credentials') {
-          throw new Error('ไม่พบบัญชีนี้ใน Supabase — สร้าง user ที่ Authentication → Users (Email: ' + email + ', ติ๊ก Auto Confirm)');
+          throw new Error('Username หรือ Password ไม่ถูกต้อง — หรือยังรอหัวหน้าอนุมัติจาก LINE');
         }
         throw new Error(error.message || 'Username หรือ Password ไม่ถูกต้อง');
       }
       sessionStorage.setItem('bucket_auth_user', data.user.email.split('@')[0]);
+      await this.loadUserRole();
       return { user: data.user.email };
     }
 
@@ -100,7 +101,50 @@ const Auth = {
       throw new Error('Username หรือ Password ไม่ถูกต้อง');
     }
     this._saveSimpleSession(user);
+    sessionStorage.setItem('bucket_auth_role', 'admin');
     return { user };
+  },
+
+  async loadUserRole() {
+    if (!this.usesSupabaseAuth()) {
+      const role = sessionStorage.getItem('bucket_auth_role') || 'admin';
+      return role;
+    }
+    const client = await this.getClient();
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) return null;
+
+    const { data: profile } = await client
+      .from('user_profiles')
+      .select('role, display_name')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    let role = profile?.role;
+    if (!role && user.user_metadata?.role) role = user.user_metadata.role;
+    if (!role && user.email?.split('@')[0] === 'admin') role = 'admin';
+    if (!role) role = 'viewer';
+
+    sessionStorage.setItem('bucket_auth_role', role);
+    if (profile?.display_name) sessionStorage.setItem('bucket_auth_display', profile.display_name);
+    return role;
+  },
+
+  getRole() {
+    return sessionStorage.getItem('bucket_auth_role') || 'viewer';
+  },
+
+  isAdmin() {
+    return this.getRole() === 'admin';
+  },
+
+  async requireAdmin(redirectTo = 'index.html') {
+    await window.authReady;
+    const role = await this.loadUserRole();
+    if (role !== 'admin') {
+      window.location.replace(redirectTo);
+      await new Promise(() => {});
+    }
   },
 
   async logout() {
@@ -110,12 +154,19 @@ const Auth = {
     }
     sessionStorage.removeItem(AUTH_SESSION_KEY);
     sessionStorage.removeItem('bucket_auth_user');
+    sessionStorage.removeItem('bucket_auth_role');
+    sessionStorage.removeItem('bucket_auth_display');
     window.location.href = 'login.html';
   },
 
   async requireAuth() {
     if (window.location.pathname.includes('login.html')) return;
-    if (await this.isLoggedIn()) return;
+    if (window.location.pathname.includes('register.html')) return;
+    if (window.location.pathname.includes('approve.html')) return;
+    if (await this.isLoggedIn()) {
+      await this.loadUserRole();
+      return;
+    }
     const page = window.location.pathname.split('/').pop() || 'index.html';
     const next = page + window.location.search;
     window.location.replace('login.html?next=' + encodeURIComponent(next));
@@ -152,8 +203,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (DataStore.isCloud()) {
       if (sub) sub.textContent = 'เข้าสู่ระบบด้วยบัญชี Supabase';
       if (mode) mode.textContent = '☁️ โหมด Cloud — Username เช่น admin (ระบบเติม @bucket.ith ให้)';
-    } else if (mode) {
-      mode.textContent = '🔒 โหมดทดสอบ — Username: ith';
+    } else {
+      const regWrap = document.getElementById('registerLinkWrap');
+      if (regWrap) regWrap.style.display = 'none';
+      if (mode) mode.textContent = '🔒 โหมดทดสอบ — Username: ith';
     }
     if (await Auth.isLoggedIn()) {
       const params = new URLSearchParams(window.location.search);
