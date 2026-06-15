@@ -225,4 +225,6 @@ const DataStore = {
   }
 };
 
+window.DataStore = DataStore;
 const API = DataStore;
+window.API = API;
