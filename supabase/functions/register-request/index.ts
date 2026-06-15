@@ -6,7 +6,8 @@ const cors = {
 };
 
 const SITE_URL = Deno.env.get('SITE_URL') || 'https://kornpapat-j.github.io/Bucket-Dashboard';
-const LINE_NOTIFY_TOKEN = Deno.env.get('LINE_NOTIFY_TOKEN') || '';
+const LINE_TOKEN = Deno.env.get('LINE_CHANNEL_ACCESS_TOKEN') || '';
+const LINE_SUPERVISOR_ID = Deno.env.get('LINE_SUPERVISOR_USER_ID') || '';
 const EMAIL_DOMAIN = Deno.env.get('EMAIL_DOMAIN') || '@bucket.ith';
 
 Deno.serve(async (req) => {
@@ -35,11 +36,6 @@ Deno.serve(async (req) => {
       .from('user_profiles').select('id').eq('username', user).maybeSingle();
     if (existingProfile) return json({ error: 'Username นี้มีในระบบแล้ว' }, 400);
 
-    const { data: existingAuth } = await supabase.auth.admin.listUsers();
-    if (existingAuth?.users?.some((u) => u.email === email)) {
-      return json({ error: 'Username นี้มีในระบบแล้ว' }, 400);
-    }
-
     const { data: pending } = await supabase
       .from('registration_requests')
       .select('id')
@@ -56,46 +52,111 @@ Deno.serve(async (req) => {
 
     if (error) throw error;
 
-    if (LINE_NOTIFY_TOKEN) {
-      const token = row.approval_token;
-      const approveBase = `${SITE_URL}/approve.html?token=${token}`;
-      const msg = [
-        '🔔 คำขอลงทะเบียนใหม่ — ITH Bucket Dashboard',
-        '',
-        `ชื่อ: ${name}`,
-        `Username: ${user}`,
-        `เวลา: ${new Date(row.created_at).toLocaleString('th-TH')}`,
-        '',
-        '👁 อนุมัติ (ดู Dashboard เท่านั้น):',
-        `${approveBase}&role=viewer`,
-        '',
-        '⚙️ อนุมัติ (Admin จัดการทุกอย่าง):',
-        `${approveBase}&role=admin`,
-        '',
-        '❌ ปฏิเสธ:',
-        `${approveBase}&action=reject`,
-      ].join('\n');
-
-      await fetch('https://notify-api.line.me/api/notify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Authorization: `Bearer ${LINE_NOTIFY_TOKEN}`,
-        },
-        body: new URLSearchParams({ message: msg }),
-      });
-    }
+    const lineSent = await notifySupervisors(supabase, {
+      name,
+      username: user,
+      createdAt: row.created_at,
+      token: row.approval_token,
+    });
 
     return json({
       success: true,
-      message: LINE_NOTIFY_TOKEN
+      message: lineSent
         ? 'ส่งคำขอแล้ว รอหัวหน้างานอนุมัติผ่าน LINE'
-        : 'บันทึกคำขอแล้ว (ยังไม่ได้ตั้ง LINE Notify — ดู LINE-REGISTRATION-SETUP.md)',
+        : 'บันทึกคำขอแล้ว (ยังไม่ได้ตั้ง LINE Messaging API — ดู LINE-REGISTRATION-SETUP.md)',
     });
   } catch (e) {
     return json({ error: e.message || 'เกิดข้อผิดพลาด' }, 500);
   }
 });
+
+async function notifySupervisors(
+  supabase: ReturnType<typeof createClient>,
+  req: { name: string; username: string; createdAt: string; token: string }
+) {
+  if (!LINE_TOKEN) return false;
+
+  const recipients: string[] = [];
+  const { data: supervisors } = await supabase.from('line_supervisors').select('line_user_id');
+  if (supervisors?.length) {
+    recipients.push(...supervisors.map((s) => s.line_user_id));
+  }
+  if (LINE_SUPERVISOR_ID && !recipients.includes(LINE_SUPERVISOR_ID)) {
+    recipients.push(LINE_SUPERVISOR_ID);
+  }
+  if (!recipients.length) return false;
+
+  const base = `${SITE_URL}/approve.html?token=${req.token}`;
+  const time = new Date(req.createdAt).toLocaleString('th-TH');
+
+  const flex = {
+    type: 'flex',
+    altText: `คำขอลงทะเบียน: ${req.name}`,
+    contents: {
+      type: 'bubble',
+      header: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: '#E87722',
+        paddingAll: '16px',
+        contents: [
+          { type: 'text', text: '🔔 คำขอลงทะเบียนใหม่', color: '#FFFFFF', weight: 'bold', size: 'md' },
+          { type: 'text', text: 'ITH Bucket Dashboard', color: '#FFFFFF', size: 'xs', margin: 'sm' },
+        ],
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'sm',
+        paddingAll: '16px',
+        contents: [
+          { type: 'text', text: `ชื่อ: ${req.name}`, wrap: true },
+          { type: 'text', text: `Username: ${req.username}`, wrap: true },
+          { type: 'text', text: `เวลา: ${time}`, size: 'sm', color: '#888888', wrap: true },
+        ],
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'sm',
+        paddingAll: '12px',
+        contents: [
+          {
+            type: 'button',
+            style: 'primary',
+            color: '#E87722',
+            action: { type: 'uri', label: '👁 อนุมัติ User (Dashboard)', uri: `${base}&role=viewer` },
+          },
+          {
+            type: 'button',
+            style: 'primary',
+            color: '#3A3F44',
+            action: { type: 'uri', label: '⚙️ อนุมัติ Admin', uri: `${base}&role=admin` },
+          },
+          {
+            type: 'button',
+            style: 'secondary',
+            action: { type: 'uri', label: '❌ ปฏิเสธ', uri: `${base}&action=reject` },
+          },
+        ],
+      },
+    },
+  };
+
+  let sent = false;
+  for (const to of recipients) {
+    const res = await fetch('https://api.line.me/v2/bot/message/push', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${LINE_TOKEN}`,
+      },
+      body: JSON.stringify({ to, messages: [flex] }),
+    });
+    if (res.ok) sent = true;
+  }
+  return sent;
+}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
