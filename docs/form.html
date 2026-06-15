@@ -22,29 +22,7 @@
     <div class="form-card">
       <h1 class="form-title">ฟอร์มบันทึกข้อมูลการขุดดิน</h1>
       <p class="form-subtitle">กรอกข้อมูลด้านล่างเพื่อนำไปแสดงบน Dashboard</p>
-      <div class="github-notice" id="githubNotice">
-        <strong>📌 ทำไมต้องอัปโหลดไฟล์? (เพราะยังไม่มี Server)</strong>
-        <p><strong>ตอนกรอกฟอร์ม</strong> → ข้อมูลเก็บในเครื่องคุณคนเดียว (เหมือนบันทึกในโน้ตส่วนตัว) คนอื่นเปิด Dashboard จะยังไม่เห็น</p>
-        <p><strong>ตอนอัปโหลด records.json ขึ้น GitHub</strong> → ข้อมูลไปอยู่บนเว็บร่วมกัน ทุกคนเปิด Dashboard จะเห็นเหมือนกัน</p>
-        <details class="upload-steps">
-          <summary>📖 วิธีอัปโหลดทีละขั้น (คลิกเปิด)</summary>
-          <ol>
-            <li>กรอกข้อมูลในฟอร์ม แล้วกด <strong>บันทึก</strong> ตามปกติ</li>
-            <li>กดปุ่ม <strong>⬇️ ดาวน์โหลด records.json</strong> ด้านล่าง → ไฟล์จะลงเครื่องคุณ</li>
-            <li>เปิด GitHub → เข้า repo ของโปรเจกต์</li>
-            <li>ไปที่โฟลเดอร์ <code>docs</code> → <code>data</code> → คลิกไฟล์ <code>records.json</code></li>
-            <li>กดปุ่ม ✏️ <strong>Edit</strong> (แก้ไข)</li>
-            <li>ลบเนื้อหาเดิมทั้งหมด แล้วเปิดไฟล์ที่ดาวน์โหลดมา คัดลอกวางแทน</li>
-            <li>กด <strong>Commit changes</strong> ด้านล่าง</li>
-            <li>รอ 1–2 นาที แล้ว Refresh หน้า Dashboard — ทุกคนจะเห็นข้อมูลใหม่</li>
-          </ol>
-        </details>
-        <div class="form-actions" style="margin-top:8px">
-          <button type="button" class="btn-primary" id="btnExportJson">⬇️ ดาวน์โหลด records.json</button>
-          <button type="button" class="btn-secondary" id="btnClearLocal">🗑️ ล้างข้อมูลชั่วคราวในเครื่อง</button>
-        </div>
-        <p class="local-count" id="localCount"></p>
-      </div>
+      <div class="github-notice" id="githubNotice"></div>
 
       <div class="form-tabs">
         <button class="form-tab active" data-tab="production">🪣 บันทึกการขุดดิน</button>
@@ -167,7 +145,10 @@
     </div>
   </div>
 
+  <script src="js/supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/utils.js"></script>
+  <script src="js/data-store.js"></script>
   <script src="js/form.js"></script>
 </body>
 </html>

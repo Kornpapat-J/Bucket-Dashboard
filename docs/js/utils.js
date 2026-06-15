@@ -1,4 +1,4 @@
-const LOCAL_KEY = 'bucket_dashboard_local';
+const LOCAL_KEY = 'bucket_dashboard_local'; // used by data-store.js fallback
 
 function genId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -8,92 +8,6 @@ function getDataUrl() {
   return new URL('data/records.json', window.location.href).href;
 }
 
-const DataStore = {
-  _jsonCache: null,
-
-  async _loadJson() {
-    if (this._jsonCache) return this._jsonCache;
-    const res = await fetch(getDataUrl());
-    if (!res.ok) throw new Error('Failed to load data/records.json');
-    this._jsonCache = await res.json();
-    return this._jsonCache;
-  },
-
-  _loadLocal() {
-    try {
-      const raw = localStorage.getItem(LOCAL_KEY);
-      return raw ? JSON.parse(raw) : { production: [], downtime: [] };
-    } catch {
-      return { production: [], downtime: [] };
-    }
-  },
-
-  _saveLocal(local) {
-    localStorage.setItem(LOCAL_KEY, JSON.stringify({
-      production: local.production,
-      downtime: local.downtime
-    }));
-  },
-
-  _merge(json, local) {
-    return {
-      config: json.config || {},
-      production: [...(json.production || []), ...(local.production || [])],
-      downtime: [...(json.downtime || []), ...(local.downtime || [])]
-    };
-  },
-
-  async getData() {
-    const json = await this._loadJson();
-    return this._merge(json, this._loadLocal());
-  },
-
-  async getByDate(date) {
-    const all = await this.getData();
-    return {
-      config: all.config,
-      production: all.production.filter(r => r.date === date),
-      downtime: all.downtime.filter(r => r.date === date)
-    };
-  },
-
-  async addProduction(data) {
-    const local = this._loadLocal();
-    const record = { id: genId(), createdAt: new Date().toISOString(), ...data };
-    local.production.push(record);
-    this._saveLocal(local);
-    return record;
-  },
-
-  async addDowntime(data) {
-    const local = this._loadLocal();
-    const record = { id: genId(), createdAt: new Date().toISOString(), ...data };
-    local.downtime.push(record);
-    this._saveLocal(local);
-    return record;
-  },
-
-  async exportMergedJson() {
-    const data = await this.getData();
-    return JSON.stringify({
-      config: data.config,
-      production: data.production,
-      downtime: data.downtime
-    }, null, 2);
-  },
-
-  getLocalCount() {
-    const local = this._loadLocal();
-    return (local.production?.length || 0) + (local.downtime?.length || 0);
-  },
-
-  clearLocal() {
-    localStorage.removeItem(LOCAL_KEY);
-    this._jsonCache = null;
-  }
-};
-
-const API = DataStore;
 function formatDateTH(d) {
   const dt = typeof d === 'string' ? new Date(d + 'T00:00:00') : d;
   const dd = String(dt.getDate()).padStart(2, '0');

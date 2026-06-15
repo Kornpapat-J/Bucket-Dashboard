@@ -5,6 +5,8 @@ let activeTab = 'production';
 
 async function init() {
   try {
+    await DataStore.init();
+    updateModeNotice();
     const data = await API.getData();
     config = data.config || {};
     populateBucketSelects();
@@ -17,14 +19,49 @@ async function init() {
   }
 }
 
-function updateLocalCount() {
-  const count = DataStore.getLocalCount();
-  const el = document.getElementById('localCount');
-  if (el) {
-    el.textContent = count > 0
-      ? `มีข้อมูลชั่วคราว ${count} รายการ (ยังไม่ได้อัปโหลด GitHub)`
-      : 'ยังไม่มีข้อมูลชั่วคราว — ข้อมูลแสดงจาก records.json บน GitHub';
+function updateModeNotice() {
+  const notice = document.getElementById('githubNotice');
+  if (!notice) return;
+
+  if (DataStore.isCloud()) {
+    notice.className = 'github-notice cloud-notice';
+    notice.innerHTML = `
+      <strong>☁️ โหมด Cloud — บันทึกร่วมกันทุกเครื่อง</strong>
+      <p>เมื่อกดบันทึก ข้อมูลจะเข้า Database ทันที ทุกคนที่เปิด Dashboard จะเห็นอัปเดตอัตโนมัติ ไม่ต้อง push GitHub</p>
+      <p class="local-count">✓ เชื่อมต่อ Supabase แล้ว</p>`;
+    return;
   }
+
+  notice.className = 'github-notice';
+  notice.innerHTML = `
+    <strong>📌 โหมดทดสอบ (ยังไม่มี Database)</strong>
+    <p>ข้อมูลจากฟอร์มเก็บในเครื่องนี้เท่านั้น — คนอื่นยังไม่เห็น</p>
+    <p>ตั้งค่า Supabase ตาม <code>docs/SUPABASE-SETUP.md</code> เพื่อให้ทุกเครื่องเห็นข้อมูลร่วมกันอัตโนมัติ</p>
+    <details class="upload-steps">
+      <summary>📖 วิธีอัปโหลด JSON ชั่วคราว (คลิกเปิด)</summary>
+      <ol>
+        <li>กรอกฟอร์ม → กดบันทึก</li>
+        <li>กดดาวน์โหลด records.json</li>
+        <li>อัปโหลดแทนที่ docs/data/records.json บน GitHub</li>
+      </ol>
+    </details>
+    <div class="form-actions" style="margin-top:8px">
+      <button type="button" class="btn-primary" id="btnExportJson">⬇️ ดาวน์โหลด records.json</button>
+      <button type="button" class="btn-secondary" id="btnClearLocal">🗑️ ล้างข้อมูลชั่วคราวในเครื่อง</button>
+    </div>
+    <p class="local-count" id="localCount"></p>`;
+
+  document.getElementById('btnExportJson')?.addEventListener('click', exportJson);
+  document.getElementById('btnClearLocal')?.addEventListener('click', clearLocalData);
+}
+
+function updateLocalCount() {
+  const el = document.getElementById('localCount');
+  if (!el || DataStore.isCloud()) return;
+  const count = DataStore.getLocalCount();
+  el.textContent = count > 0
+    ? `มีข้อมูลชั่วคราว ${count} รายการ (ยังไม่ได้อัปโหลด GitHub)`
+    : 'ยังไม่มีข้อมูลชั่วคราว — ข้อมูลแสดงจาก records.json บน GitHub';
 }
 
 function populateBucketSelects() {
@@ -169,7 +206,5 @@ document.addEventListener('DOMContentLoaded', () => {
   setupOngoingToggle();
   document.getElementById('formProduction').addEventListener('submit', submitProduction);
   document.getElementById('formDowntime').addEventListener('submit', submitDowntime);
-  document.getElementById('btnExportJson')?.addEventListener('click', exportJson);
-  document.getElementById('btnClearLocal')?.addEventListener('click', clearLocalData);
   init();
 });

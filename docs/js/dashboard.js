@@ -23,6 +23,7 @@ async function loadData() {
     state.downtime = data.downtime;
     state.config = data.config || {};
     renderAll();
+    document.getElementById('footerTime').textContent = `อัปเดตล่าสุด: ${new Date().toLocaleString('th-TH')}`;
   } catch (err) {
     console.error(err);
   }
@@ -414,11 +415,14 @@ function startAutoRefresh() {
   }, 1000);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  await DataStore.init();
   setupShiftButtons();
   setupDtFilters();
   setupDateNav();
-  loadData();
+  await loadData();
+  DataStore.subscribeRealtime();
+  DataStore.onChange(() => loadData());
   startAutoRefresh();
   document.getElementById('footerTime').textContent = `อัปเดตล่าสุด: ${new Date().toLocaleString('th-TH')}`;
 });

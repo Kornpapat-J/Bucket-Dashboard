@@ -410,6 +410,14 @@ body {
 .github-notice code { background: rgba(232, 135, 58, 0.1); padding: 1px 5px; border-radius: 4px; font-size: 0.85em; }
 .local-count { margin-top: 8px; font-family: "Chakra Petch", monospace; font-size: var(--fs-xs); color: var(--ith-orange-dark); font-weight: 700; }
 
+.cloud-notice {
+  background: #ecfdf5;
+  border-color: #6ee7b7;
+}
+.cloud-notice strong { color: #047857; }
+.cloud-notice p { color: #065f46; }
+.cloud-notice .local-count { color: #047857; }
+
 .upload-steps { margin-top: 10px; }
 .upload-steps summary {
   cursor: pointer;
