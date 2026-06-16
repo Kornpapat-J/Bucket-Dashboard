@@ -167,6 +167,17 @@ function bcmTooltipLabel(ctx) {
   return `${ctx.dataset.label}: ${fmtNum(val)} BCM`;
 }
 
+function barLabelTextColor(bgColor) {
+  const hex = (typeof bgColor === 'string' && bgColor.startsWith('#')) ? bgColor : '#e8873a';
+  const h = hex.slice(1);
+  if (h.length < 6) return '#2d3236';
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return lum > 0.6 ? '#2d3236' : '#fff8f0';
+}
+
 const barValueLabelPlugin = {
   id: 'barValueLabels',
   afterDatasetsDraw(chart) {
@@ -179,6 +190,7 @@ const barValueLabelPlugin = {
     ctx.textAlign = 'center';
     data.datasets.forEach((ds, di) => {
       const meta = chart.getDatasetMeta(di);
+      const barColor = ds.backgroundColor || '#e8873a';
       meta.data.forEach((bar, i) => {
         const val = ds.data[i];
         if (!val || val <= 0) return;
@@ -187,10 +199,10 @@ const barValueLabelPlugin = {
         const barH = Math.abs(base - barTop);
         const label = fmtNum(val);
         if (barH < 18) {
-          ctx.fillStyle = ds.backgroundColor || '#e8873a';
+          ctx.fillStyle = barColor;
           ctx.fillText(label, x, barTop - 4);
         } else {
-          ctx.fillStyle = '#fff';
+          ctx.fillStyle = barLabelTextColor(barColor);
           ctx.fillText(label, x, barTop + 11);
         }
       });
