@@ -7,6 +7,7 @@ let config = { buckets: BUCKETS };
 let activeTab = 'production';
 let editingProductionId = null;
 let editingDowntimeId = null;
+let recentBucketFilter = 'all';
 let cachedData = { production: [], downtime: [] };
 
 async function init() {
@@ -381,15 +382,32 @@ function formatProdRecent(r) {
   </div>`;
 }
 
+function matchesRecentBucket(record) {
+  if (recentBucketFilter === 'all') return true;
+  return record.bucketId === recentBucketFilter;
+}
+
+function recentEmptyMessage() {
+  if (recentBucketFilter === 'all') return 'ยังไม่มีรายการวันนี้';
+  return `ไม่มีรายการ ${recentBucketFilter} วันนี้`;
+}
+
 function loadRecentRecords(data) {
   cachedData = data;
   const today = toISODate(new Date());
-  const recentProd = data.production.filter(r => r.date === today).slice().reverse();
-  const recentDt = data.downtime.filter(r => r.date === today).slice().reverse();
+  const recentProd = data.production
+    .filter(r => r.date === today && matchesRecentBucket(r))
+    .slice()
+    .reverse();
+  const recentDt = data.downtime
+    .filter(r => r.date === today && matchesRecentBucket(r))
+    .slice()
+    .reverse();
 
+  const empty = recentEmptyMessage();
   document.getElementById('recentProduction').innerHTML = recentProd.length
     ? recentProd.map(formatProdRecent).join('')
-    : '<div class="dt-empty">ยังไม่มีรายการวันนี้</div>';
+    : `<div class="dt-empty">${empty}</div>`;
 
   document.getElementById('recentDowntime').innerHTML = recentDt.length
     ? recentDt.map(r => {
@@ -403,7 +421,19 @@ function loadRecentRecords(data) {
           ${recentActionsHtml(r.id, 'downtime', canMutate)}
         </div>`;
       }).join('')
-    : '<div class="dt-empty">ยังไม่มีรายการวันนี้</div>';
+    : `<div class="dt-empty">${empty}</div>`;
+}
+
+function setupRecentBucketFilter() {
+  document.getElementById('recentBucketFilter')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-bucket]');
+    if (!btn) return;
+    recentBucketFilter = btn.dataset.bucket;
+    document.querySelectorAll('#recentBucketFilter [data-bucket]').forEach(b => {
+      b.classList.toggle('active', b === btn);
+    });
+    loadRecentRecords(cachedData);
+  });
 }
 
 async function handleRecentEdit(kind, id) {
@@ -509,6 +539,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupOngoingToggle();
   setupProductionCalc();
   setupRecentActions();
+  setupRecentBucketFilter();
   setupEditCancel();
   document.getElementById('formProduction').addEventListener('submit', submitProduction);
   document.getElementById('formDowntime').addEventListener('submit', submitDowntime);

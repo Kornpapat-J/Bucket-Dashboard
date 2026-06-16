@@ -797,7 +797,28 @@ body {
 .toast.error { background: #b85c38; }
 @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 .recent-list { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px; }
-.recent-list h3 { font-family: "Chakra Petch", Arial, sans-serif; font-size: var(--fs-sm); color: var(--ith-gray-dark); margin-bottom: 8px; }
+.recent-list h3 { font-family: "Chakra Petch", Arial, sans-serif; font-size: var(--fs-sm); color: var(--ith-gray-dark); margin-bottom: 0; }
+.recent-list-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.recent-filter-wrap { margin: 0; }
+.recent-section-title {
+  font-family: "Chakra Petch", Arial, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ith-gray-mid);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 12px 0 6px;
+}
+.recent-section-title:first-of-type { margin-top: 0; }
+.dt-filter-btn.bucket-filter-1.active { background: #e8873a; border-color: #e8873a; }
+.dt-filter-btn.bucket-filter-2.active { background: #3d3d3d; border-color: #3d3d3d; }
 .recent-item {
   display: flex;
   justify-content: space-between;

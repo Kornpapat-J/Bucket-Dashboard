@@ -240,9 +240,17 @@
       </div>
 
       <div class="recent-list">
-        <h3>📋 รายการที่บันทึกวันนี้ — Performance</h3>
+        <div class="recent-list-top">
+          <h3>📋 รายการที่บันทึกวันนี้</h3>
+          <div class="recent-filter-wrap dt-filter-wrap" id="recentBucketFilter">
+            <button type="button" class="dt-filter-btn active" data-bucket="all">ทั้งหมด</button>
+            <button type="button" class="dt-filter-btn bucket-filter-1" data-bucket="Bucket 1">Bucket 1</button>
+            <button type="button" class="dt-filter-btn bucket-filter-2" data-bucket="Bucket 2">Bucket 2</button>
+          </div>
+        </div>
+        <h4 class="recent-section-title">Performance</h4>
         <div id="recentProduction"></div>
-        <h3 style="margin-top:12px">📋 รายการที่บันทึกวันนี้ — Downtime</h3>
+        <h4 class="recent-section-title">Downtime</h4>
         <div id="recentDowntime"></div>
       </div>
     </div>
