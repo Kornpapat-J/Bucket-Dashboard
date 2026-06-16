@@ -112,30 +112,46 @@
                 <div class="total-box"><span class="total-label">total production:</span><span class="total-value" id="totalProduction">—</span></div>
                 <div class="total-box"><span class="total-label">working hours:</span><span class="total-value" id="workingHours">—</span></div>
                 <div class="total-box productivity-card"><span class="total-label">productivity:</span><span class="total-value" id="productivityTotal">—</span></div>
-                <div class="total-box target-card" id="targetCard">
-                  <div class="target-view" id="targetView">
-                    <span class="total-label">target:</span>
-                    <span class="target-value" id="dailyTarget">5,000 BCM/Day</span>
-                    <button type="button" class="target-edit-btn" id="btnEditTarget" title="ตั้งเป้าหมาย">✎</button>
+              </div>
+              <div class="target-panel" id="targetCard">
+                <div class="target-panel-body" id="targetView">
+                  <div class="target-panel-top">
+                    <span class="target-panel-tag">Target</span>
+                    <span class="target-panel-date" id="targetDateView"></span>
+                    <button type="button" class="target-edit-btn" id="btnEditTarget" title="แก้ไข Target">✎</button>
                   </div>
-                  <div class="target-editor" id="targetEditor" hidden>
-                    <p class="target-editor-title">ตั้งเป้าหมายวันที่ <span id="targetDateLabel"></span></p>
-                    <div class="target-editor-fields">
-                      <label class="target-field">
-                        <span>เป้า BCM/วัน</span>
-                        <input type="number" id="inputDailyTarget" min="0" step="100" placeholder="5000">
-                      </label>
-                      <label class="target-field">
-                        <span>เป้า BCM/ชม.</span>
-                        <input type="number" id="inputHourlyTarget" min="0" step="10" placeholder="400">
-                      </label>
+                  <div class="target-panel-metrics">
+                    <div class="target-metric">
+                      <span class="target-metric-label">BCM/Day</span>
+                      <span class="target-metric-val" id="dailyTarget">5,000</span>
                     </div>
-                    <div class="target-editor-actions">
-                      <button type="button" class="btn-target-save" id="btnSaveTarget">บันทึก</button>
-                      <button type="button" class="btn-target-cancel" id="btnCancelTarget">ยกเลิก</button>
+                    <div class="target-metric">
+                      <span class="target-metric-label">BCM/Hr</span>
+                      <span class="target-metric-val" id="hourlyTargetView">400</span>
                     </div>
                   </div>
                 </div>
+                <div class="target-panel-body target-panel-edit" id="targetEditor" hidden>
+                  <div class="target-panel-top">
+                    <span class="target-panel-tag">Target</span>
+                    <span class="target-panel-date" id="targetDateLabel"></span>
+                  </div>
+                  <div class="target-editor-fields">
+                    <label class="target-field">
+                      <span>BCM/Day</span>
+                      <input type="number" id="inputDailyTarget" min="0" step="100" placeholder="5000">
+                    </label>
+                    <label class="target-field">
+                      <span>BCM/Hr</span>
+                      <input type="number" id="inputHourlyTarget" min="0" step="10" placeholder="400">
+                    </label>
+                  </div>
+                  <div class="target-editor-actions">
+                    <button type="button" class="btn-target-save" id="btnSaveTarget">บันทึก</button>
+                    <button type="button" class="btn-target-cancel" id="btnCancelTarget">ยกเลิก</button>
+                  </div>
+                </div>
+                <p class="target-hint-admin" id="targetHint" hidden>คลิกเพื่อแก้ไข Target</p>
               </div>
             </div>
           </div>

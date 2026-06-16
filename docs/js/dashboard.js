@@ -53,15 +53,21 @@ function renderAll() {
 
 function updateTargetDisplay() {
   const daily = state.config.dailyTarget || 5000;
-  const el = document.getElementById('dailyTarget');
-  if (el) el.textContent = `${fmtNum(daily)} BCM/Day`;
+  const hourly = state.config.hourlyTarget || 400;
+  const dailyEl = document.getElementById('dailyTarget');
+  const hourlyEl = document.getElementById('hourlyTargetView');
+  const dateEl = document.getElementById('targetDateView');
+  if (dailyEl) dailyEl.textContent = fmtNum(daily);
+  if (hourlyEl) hourlyEl.textContent = fmtNum(hourly);
+  if (dateEl) dateEl.textContent = formatDateTH(state.date);
 }
 
 function openTargetEditor() {
   if (!Auth.isAdmin()) return;
   document.getElementById('targetView').hidden = true;
-  const editor = document.getElementById('targetEditor');
-  editor.hidden = false;
+  document.getElementById('targetEditor').hidden = false;
+  const hint = document.getElementById('targetHint');
+  if (hint) hint.hidden = true;
   document.getElementById('targetDateLabel').textContent = formatDateTH(state.date);
   document.getElementById('inputDailyTarget').value = state.config.dailyTarget || 5000;
   document.getElementById('inputHourlyTarget').value = state.config.hourlyTarget || 400;
@@ -71,6 +77,8 @@ function openTargetEditor() {
 function closeTargetEditor() {
   document.getElementById('targetEditor').hidden = true;
   document.getElementById('targetView').hidden = false;
+  const hint = document.getElementById('targetHint');
+  if (hint && Auth.isAdmin()) hint.hidden = false;
 }
 
 async function saveTargetEditor() {
@@ -101,15 +109,17 @@ async function saveTargetEditor() {
 function setupTargetEditor() {
   const card = document.getElementById('targetCard');
   const btnEdit = document.getElementById('btnEditTarget');
+  const hint = document.getElementById('targetHint');
   if (!Auth.isAdmin()) {
     btnEdit?.remove();
+    hint?.remove();
     return;
   }
-  card?.classList.add('target-card--editable');
-  const hint = document.createElement('p');
-  hint.className = 'target-hint-admin';
-  hint.textContent = 'คลิกการ์ดหรือ ✎ เพื่อตั้งเป้าหมายวันนี้';
-  card?.appendChild(hint);
+  card?.classList.add('target-panel--editable');
+  if (hint) {
+    hint.hidden = false;
+    hint.textContent = 'คลิกเพื่อแก้ไข Target';
+  }
   btnEdit?.addEventListener('click', (e) => { e.stopPropagation(); openTargetEditor(); });
   card?.addEventListener('click', () => {
     if (!document.getElementById('targetEditor').hidden) return;
@@ -254,7 +264,6 @@ function renderPieChart() {
   document.getElementById('totalProduction').textContent = total > 0 ? `${fmtNum(total)} BCM` : '—';
   document.getElementById('workingHours').textContent = workHrs > 0 ? `${workHrs.toFixed(1)} Hr.` : '—';
   document.getElementById('productivityTotal').textContent = productivity > 0 ? `${fmtNum(productivity)} BCM/Hr` : '—';
-  document.getElementById('dailyTarget').textContent = `${fmtNum(target)} BCM/Day`;
 
   const legendEl = document.getElementById('pieLegend');
   legendEl.innerHTML = buckets.map((b, i) =>

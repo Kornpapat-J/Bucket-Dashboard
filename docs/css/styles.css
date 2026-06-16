@@ -296,7 +296,7 @@ body {
 .pie-body { display: flex; gap: 10px; align-items: center; }
 .pie-wrap { width: 140px; height: 140px; flex-shrink: 0; position: relative; }
 .pie-wrap canvas { position: absolute; top: 0; left: 0; width: 100% !important; height: 100% !important; }
-.pie-right { flex: 2; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pie-right { flex: 2; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .pie-legend-item { display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; font-weight: 700; padding: 2px 0; }
 .pie-legend-left { display: flex; align-items: center; gap: 6px; color: var(--ith-gray-dark); }
 .pie-legend-dot { width: 10px; height: 10px; border-radius: 50%; }
@@ -307,37 +307,82 @@ body {
 .total-value { font-family: "Chakra Petch", monospace; font-size: 0.75rem; font-weight: 800; color: var(--ith-gray-dark); }
 .total-box.productivity-card { background: var(--ith-orange-pale); border-color: var(--ith-orange-muted); }
 .total-box.productivity-card .total-label, .total-box.productivity-card .total-value { color: var(--ith-orange-dark); }
-.total-box.target-card { background: rgba(232, 135, 58, 0.08); border-color: rgba(232, 135, 58, 0.35); border-style: dashed; position: relative; }
-.total-box.target-card.target-card--editable { cursor: pointer; }
-.total-box.target-card.target-card--editable:hover { background: rgba(232, 135, 58, 0.14); border-color: var(--ith-orange); }
-.total-box.target-card .total-label, .target-value { color: var(--ith-orange); font-weight: 900; }
-.target-view { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+/* Target panel — แยกจาก total-box เพื่อไม่ให้ layout ทับกัน */
+.target-panel {
+  margin-top: 6px;
+  border: 1px dashed rgba(232, 135, 58, 0.45);
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(255, 245, 235, 0.9), #fff);
+  overflow: hidden;
+}
+.target-panel.target-panel--editable { cursor: pointer; }
+.target-panel.target-panel--editable:hover { border-color: var(--ith-orange); background: rgba(255, 245, 235, 1); }
+.target-panel-body { padding: 8px 10px; }
+.target-panel-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.target-panel-tag {
+  font-family: "Chakra Petch", Arial, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--ith-orange-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.target-panel-date {
+  font-family: "Chakra Petch", monospace;
+  font-size: 0.68rem;
+  color: var(--muted);
+  flex: 1;
+}
+.target-panel-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.target-metric {
+  background: #fff;
+  border: 1px solid rgba(232, 135, 58, 0.25);
+  border-radius: 6px;
+  padding: 6px 8px;
+  text-align: center;
+}
+.target-metric-label {
+  display: block;
+  font-family: "Chakra Petch", Arial, sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.target-metric-val {
+  display: block;
+  font-family: "Chakra Petch", monospace;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--ith-orange-dark);
+  line-height: 1.2;
+  word-break: break-all;
+}
 .target-edit-btn {
-  margin-left: auto;
-  border: 1px solid rgba(232, 135, 58, 0.5);
+  border: 1px solid rgba(232, 135, 58, 0.45);
   background: #fff;
   color: var(--ith-orange-dark);
   border-radius: 5px;
-  width: 26px;
-  height: 26px;
-  font-size: 0.85rem;
+  width: 24px;
+  height: 24px;
+  font-size: 0.8rem;
   cursor: pointer;
   line-height: 1;
   flex-shrink: 0;
 }
 .target-edit-btn:hover { background: var(--ith-orange-pale); }
-.target-editor {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px dashed rgba(232, 135, 58, 0.4);
-}
-.target-editor-title {
-  font-family: "Chakra Petch", Arial, sans-serif;
-  font-size: var(--fs-xs);
-  font-weight: 700;
-  color: var(--ith-orange-dark);
-  margin-bottom: 8px;
-}
+.target-panel-edit { border-top: 1px dashed rgba(232, 135, 58, 0.3); background: #fff; }
 .target-editor-fields {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -348,37 +393,39 @@ body {
   display: flex;
   flex-direction: column;
   gap: 3px;
+  min-width: 0;
 }
 .target-field span {
   font-family: "Chakra Petch", Arial, sans-serif;
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 700;
   color: var(--muted);
   text-transform: uppercase;
 }
 .target-field input {
-  border: 1px solid rgba(232, 135, 58, 0.45);
+  border: 1px solid rgba(232, 135, 58, 0.4);
   border-radius: 6px;
   padding: 6px 8px;
   font-family: "Chakra Petch", monospace;
-  font-size: var(--fs-sm);
+  font-size: 0.8rem;
   font-weight: 700;
   color: var(--ith-orange-dark);
   outline: none;
   width: 100%;
+  min-width: 0;
 }
 .target-field input:focus {
   border-color: var(--ith-orange);
-  box-shadow: 0 0 0 2px rgba(232, 135, 58, 0.15);
+  box-shadow: 0 0 0 2px rgba(232, 135, 58, 0.12);
 }
 .target-editor-actions { display: flex; gap: 6px; }
 .btn-target-save,
 .btn-target-cancel {
   flex: 1;
   border-radius: 6px;
-  padding: 6px 10px;
+  padding: 7px 8px;
   font-family: "Chakra Petch", Arial, sans-serif;
-  font-size: var(--fs-xs);
+  font-size: 0.68rem;
   font-weight: 700;
   cursor: pointer;
   border: none;
@@ -393,9 +440,10 @@ body {
   border: 1px solid var(--border);
 }
 .target-hint-admin {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   color: var(--muted);
-  margin-top: 4px;
+  text-align: center;
+  padding: 0 8px 6px;
   font-style: italic;
 }
 
