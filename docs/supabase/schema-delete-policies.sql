@@ -1,0 +1,6 @@
+-- รันครั้งเดียวใน Supabase SQL Editor ถ้าลบข้อมูลไม่ได้ (RLS)
+drop policy if exists "production_delete" on production;
+drop policy if exists "downtime_delete" on downtime;
+
+create policy "production_delete" on production for delete to authenticated using (true);
+create policy "downtime_delete" on downtime for delete to authenticated using (true);

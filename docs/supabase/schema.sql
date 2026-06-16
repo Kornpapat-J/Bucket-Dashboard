@@ -42,14 +42,19 @@ drop policy if exists "downtime_select" on downtime;
 drop policy if exists "downtime_insert" on downtime;
 drop policy if exists "downtime_update" on downtime;
 
+drop policy if exists "production_delete" on production;
+drop policy if exists "downtime_delete" on downtime;
+
 -- เฉพาะผู้ Login แล้วเท่านั้น (Supabase Auth)
 create policy "production_select" on production for select to authenticated using (true);
 create policy "production_insert" on production for insert to authenticated with check (true);
 create policy "production_update" on production for update to authenticated using (true);
+create policy "production_delete" on production for delete to authenticated using (true);
 
 create policy "downtime_select" on downtime for select to authenticated using (true);
 create policy "downtime_insert" on downtime for insert to authenticated with check (true);
 create policy "downtime_update" on downtime for update to authenticated using (true);
+create policy "downtime_delete" on downtime for delete to authenticated using (true);
 
 -- Realtime (ข้ามถ้ารันแล้ว)
 do $$ begin

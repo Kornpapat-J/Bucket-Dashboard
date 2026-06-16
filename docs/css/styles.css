@@ -798,7 +798,53 @@ body {
 @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 .recent-list { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px; }
 .recent-list h3 { font-family: "Chakra Petch", Arial, sans-serif; font-size: var(--fs-sm); color: var(--ith-gray-dark); margin-bottom: 8px; }
-.recent-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: var(--ith-gray-pale); border-radius: 6px; margin-bottom: 4px; font-size: var(--fs-sm); }
+.recent-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--ith-gray-pale);
+  border-radius: 6px;
+  margin-bottom: 4px;
+  font-size: var(--fs-sm);
+}
+.recent-item-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.recent-item-main > span:first-child { font-weight: 600; white-space: nowrap; }
+.recent-item-main > span:last-child { color: var(--ith-gray-mid); text-align: right; }
+.recent-item-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.btn-recent {
+  font-family: "Sarabun", sans-serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-recent-edit {
+  color: var(--ith-orange-dark);
+  border-color: var(--ith-orange-muted);
+}
+.btn-recent-edit:hover { background: var(--ith-orange-pale); }
+.btn-recent-delete {
+  color: #b33;
+  border-color: #e8c4c4;
+}
+.btn-recent-delete:hover { background: #fff0f0; }
 
 .github-notice {
   background: var(--ith-orange-pale);
@@ -1078,6 +1124,9 @@ body {
     margin-left: 16px;
     margin-right: 16px;
   }
+  .recent-item { flex-wrap: wrap; }
+  .recent-item-main { flex-direction: column; align-items: flex-start; width: 100%; }
+  .recent-item-actions { width: 100%; justify-content: flex-end; }
   .form-card--perf .form-card-header { padding: 16px; }
 }
 

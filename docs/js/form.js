@@ -5,6 +5,9 @@ const LEVELS = ['b1', 'b2', 'b3'];
 
 let config = { buckets: BUCKETS };
 let activeTab = 'production';
+let editingProductionId = null;
+let editingDowntimeId = null;
+let cachedData = { production: [], downtime: [] };
 
 async function init() {
   try {
@@ -12,6 +15,7 @@ async function init() {
     updateModeNotice();
     const data = await API.getData();
     config = data.config || {};
+    cachedData = data;
     document.getElementById('prodDate').value = toISODate(new Date());
     document.getElementById('dtDate').value = toISODate(new Date());
     loadRecentRecords(data);
@@ -205,8 +209,14 @@ async function submitProduction(e) {
   }
 
   try {
-    await API.addProduction(data);
-    showToast('บันทึกสำเร็จ ✓');
+    if (editingProductionId) {
+      await API.updateProduction(editingProductionId, data);
+      showToast('แก้ไขข้อมูลสำเร็จ ✓');
+      clearProductionEdit();
+    } else {
+      await API.addProduction(data);
+      showToast('บันทึกสำเร็จ ✓');
+    }
     LEVELS.forEach(lv => {
       form[`${lv}Width`].value = '';
       form[`${lv}Length`].value = '';
@@ -217,10 +227,11 @@ async function submitProduction(e) {
     form.hourNo.value = '';
     updateCalculations();
     const allData = await API.getData();
+    cachedData = allData;
     loadRecentRecords(allData);
     updateLocalCount();
   } catch {
-    showToast('บันทึกไม่สำเร็จ กรุณาลองใหม่', true);
+    showToast(editingProductionId ? 'แก้ไขไม่สำเร็จ' : 'บันทึกไม่สำเร็จ กรุณาลองใหม่', true);
   }
 }
 
@@ -245,16 +256,23 @@ async function submitDowntime(e) {
   }
 
   try {
-    await API.addDowntime(data);
-    showToast('บันทึก Downtime สำเร็จ ✓');
+    if (editingDowntimeId) {
+      await API.updateDowntime(editingDowntimeId, data);
+      showToast('แก้ไข Downtime สำเร็จ ✓');
+      clearDowntimeEdit();
+    } else {
+      await API.addDowntime(data);
+      showToast('บันทึก Downtime สำเร็จ ✓');
+    }
     form.description.value = '';
     form.ongoing.checked = false;
     form.endTime.disabled = false;
     const allData = await API.getData();
+    cachedData = allData;
     loadRecentRecords(allData);
     updateLocalCount();
   } catch {
-    showToast('บันทึกไม่สำเร็จ กรุณาลองใหม่', true);
+    showToast(editingDowntimeId ? 'แก้ไขไม่สำเร็จ' : 'บันทึกไม่สำเร็จ กรุณาลองใหม่', true);
   }
 }
 
@@ -282,16 +300,92 @@ function clearLocalData() {
   showToast('ล้างข้อมูลชั่วคราวแล้ว');
 }
 
+function setProductionEditMode(editing) {
+  const btn = document.getElementById('btnProdSubmit');
+  const cancel = document.getElementById('btnProdCancelEdit');
+  if (btn) btn.textContent = editing ? '💾 บันทึกการแก้ไข' : '💾 บันทึกข้อมูล';
+  if (cancel) cancel.hidden = !editing;
+}
+
+function setDowntimeEditMode(editing) {
+  const btn = document.getElementById('btnDtSubmit');
+  const cancel = document.getElementById('btnDtCancelEdit');
+  if (btn) btn.textContent = editing ? '💾 บันทึกการแก้ไข' : '💾 บันทึก Downtime';
+  if (cancel) cancel.hidden = !editing;
+}
+
+function clearProductionEdit() {
+  editingProductionId = null;
+  setProductionEditMode(false);
+}
+
+function clearDowntimeEdit() {
+  editingDowntimeId = null;
+  setDowntimeEditMode(false);
+}
+
+function fillProductionForm(record) {
+  const form = document.getElementById('formProduction');
+  const meta = parsePerfNote(record.note);
+  form.date.value = record.date;
+  form.shift.value = record.shift;
+  const bucketRadio = form.querySelector(`input[name="bucketId"][value="${CSS.escape(record.bucketId)}"]`);
+  if (bucketRadio) bucketRadio.checked = true;
+  form.hourNo.value = meta?.hourNo ?? '';
+  LEVELS.forEach(lv => {
+    const lvData = meta?.levels?.[lv];
+    form[`${lv}Width`].value = lvData?.width ?? '';
+    form[`${lv}Length`].value = lvData?.length ?? '';
+    form[`${lv}Height`].value = lvData?.height ?? '';
+  });
+  form.smuStart.value = meta?.smuStart ?? '';
+  form.smuEnd.value = meta?.smuEnd ?? '';
+  form.startTime.value = record.startTime || '';
+  form.endTime.value = record.endTime || '';
+  form.operatorName.value = record.operatorName || '';
+  form.recordedBy.value = record.location || '';
+  updateCalculations();
+}
+
+function fillDowntimeForm(record) {
+  const form = document.getElementById('formDowntime');
+  form.date.value = record.date;
+  form.shift.value = record.shift;
+  form.bucketId.value = record.bucketId;
+  form.type.value = record.type;
+  form.startTime.value = record.startTime || '';
+  form.ongoing.checked = !!record.ongoing;
+  form.endTime.disabled = !!record.ongoing;
+  form.endTime.value = record.ongoing ? '' : (record.endTime || '');
+  form.description.value = record.description || '';
+}
+
+function recentActionsHtml(id, kind, canMutate) {
+  if (!canMutate) return '';
+  return `<div class="recent-item-actions">
+    <button type="button" class="btn-recent btn-recent-edit" data-kind="${kind}" data-id="${id}" title="แก้ไข">✎ แก้ไข</button>
+    <button type="button" class="btn-recent btn-recent-delete" data-kind="${kind}" data-id="${id}" title="ลบ">🗑 ลบ</button>
+  </div>`;
+}
+
 function formatProdRecent(r) {
   const meta = parsePerfNote(r.note);
   const hour = meta?.hourNo ? `Hr.${meta.hourNo}` : `${r.startTime}-${r.endTime}`;
-  return `<div class="recent-item"><span>${r.bucketId} — ${hour}</span><span>${fmtNum(r.volumeBCM)} BCM (${r.operatorName})</span></div>`;
+  const canMutate = DataStore.canMutateRecord(r.id, 'production');
+  return `<div class="recent-item">
+    <div class="recent-item-main">
+      <span>${r.bucketId} — ${hour}</span>
+      <span>${fmtNum(r.volumeBCM)} BCM (${r.operatorName})</span>
+    </div>
+    ${recentActionsHtml(r.id, 'production', canMutate)}
+  </div>`;
 }
 
 function loadRecentRecords(data) {
+  cachedData = data;
   const today = toISODate(new Date());
-  const recentProd = data.production.filter(r => r.date === today).slice(-5).reverse();
-  const recentDt = data.downtime.filter(r => r.date === today).slice(-5).reverse();
+  const recentProd = data.production.filter(r => r.date === today).slice().reverse();
+  const recentDt = data.downtime.filter(r => r.date === today).slice().reverse();
 
   document.getElementById('recentProduction').innerHTML = recentProd.length
     ? recentProd.map(formatProdRecent).join('')
@@ -300,9 +394,112 @@ function loadRecentRecords(data) {
   document.getElementById('recentDowntime').innerHTML = recentDt.length
     ? recentDt.map(r => {
         const dur = formatDuration(calcDuration(r.startTime, r.endTime, r.ongoing));
-        return `<div class="recent-item"><span>${r.bucketId} — ${r.type}</span><span>${dur}${r.ongoing ? ' (ongoing)' : ''}</span></div>`;
+        const canMutate = DataStore.canMutateRecord(r.id, 'downtime');
+        return `<div class="recent-item">
+          <div class="recent-item-main">
+            <span>${r.bucketId} — ${r.type}</span>
+            <span>${dur}${r.ongoing ? ' (ongoing)' : ''}</span>
+          </div>
+          ${recentActionsHtml(r.id, 'downtime', canMutate)}
+        </div>`;
       }).join('')
     : '<div class="dt-empty">ยังไม่มีรายการวันนี้</div>';
+}
+
+async function handleRecentEdit(kind, id) {
+  if (kind === 'production') {
+    const record = cachedData.production.find(r => r.id === id);
+    if (!record) return;
+    clearDowntimeEdit();
+    editingProductionId = id;
+    setProductionEditMode(true);
+    fillProductionForm(record);
+    document.querySelector('.form-tab[data-tab="production"]')?.click();
+    document.getElementById('panelProduction')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    showToast('โหลดข้อมูลเพื่อแก้ไข — แก้แล้วกดบันทึกการแก้ไข');
+    return;
+  }
+  const record = cachedData.downtime.find(r => r.id === id);
+  if (!record) return;
+  clearProductionEdit();
+  editingDowntimeId = id;
+  setDowntimeEditMode(true);
+  fillDowntimeForm(record);
+  document.querySelector('.form-tab[data-tab="downtime"]')?.click();
+  document.getElementById('panelDowntime')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  showToast('โหลดข้อมูลเพื่อแก้ไข — แก้แล้วกดบันทึกการแก้ไข');
+}
+
+async function handleRecentDelete(kind, id) {
+  const list = kind === 'production' ? cachedData.production : cachedData.downtime;
+  const record = list.find(r => r.id === id);
+  if (!record) return;
+  const label = kind === 'production'
+    ? `${record.bucketId} ${fmtNum(record.volumeBCM)} BCM`
+    : `${record.bucketId} ${record.type}`;
+  if (!confirm(`ลบรายการนี้?\n${label}`)) return;
+  try {
+    if (kind === 'production') {
+      if (editingProductionId === id) clearProductionEdit();
+      await API.deleteProduction(id);
+    } else {
+      if (editingDowntimeId === id) clearDowntimeEdit();
+      await API.deleteDowntime(id);
+    }
+    showToast('ลบรายการแล้ว ✓');
+    const allData = await API.getData();
+    loadRecentRecords(allData);
+    updateLocalCount();
+  } catch {
+    showToast('ลบไม่สำเร็จ', true);
+  }
+}
+
+function setupRecentActions() {
+  const onClick = (e) => {
+    const editBtn = e.target.closest('.btn-recent-edit');
+    const delBtn = e.target.closest('.btn-recent-delete');
+    if (editBtn) {
+      handleRecentEdit(editBtn.dataset.kind, editBtn.dataset.id);
+      return;
+    }
+    if (delBtn) {
+      handleRecentDelete(delBtn.dataset.kind, delBtn.dataset.id);
+    }
+  };
+  document.getElementById('recentProduction')?.addEventListener('click', onClick);
+  document.getElementById('recentDowntime')?.addEventListener('click', onClick);
+}
+
+function setupEditCancel() {
+  document.getElementById('btnProdCancelEdit')?.addEventListener('click', () => {
+    clearProductionEdit();
+    document.getElementById('formProduction')?.reset();
+    document.getElementById('prodDate').value = toISODate(new Date());
+    updateCalculations();
+    showToast('ยกเลิกการแก้ไข');
+  });
+  document.getElementById('btnDtCancelEdit')?.addEventListener('click', () => {
+    clearDowntimeEdit();
+    document.getElementById('formDowntime')?.reset();
+    document.getElementById('dtDate').value = toISODate(new Date());
+    document.getElementById('dtEndTime').disabled = false;
+    showToast('ยกเลิกการแก้ไข');
+  });
+  document.getElementById('btnProdReset')?.addEventListener('click', () => {
+    setTimeout(() => {
+      clearProductionEdit();
+      document.getElementById('prodDate').value = toISODate(new Date());
+      updateCalculations();
+    }, 0);
+  });
+  document.getElementById('btnDtReset')?.addEventListener('click', () => {
+    setTimeout(() => {
+      clearDowntimeEdit();
+      document.getElementById('dtDate').value = toISODate(new Date());
+      document.getElementById('dtEndTime').disabled = false;
+    }, 0);
+  });
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -311,6 +508,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupTabs();
   setupOngoingToggle();
   setupProductionCalc();
+  setupRecentActions();
+  setupEditCancel();
   document.getElementById('formProduction').addEventListener('submit', submitProduction);
   document.getElementById('formDowntime').addEventListener('submit', submitDowntime);
   init();

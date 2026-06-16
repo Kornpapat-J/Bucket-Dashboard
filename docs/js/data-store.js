@@ -232,6 +232,42 @@ const DataStore = {
     return record;
   },
 
+  async updateProduction(id, data) {
+    if (this.isCloud()) {
+      const { data: row, error } = await this._client
+        .from('production')
+        .update(this._toProductionRow(data))
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      this._notify();
+      return this._mapProduction(row);
+    }
+
+    const local = this._loadLocal();
+    const idx = local.production.findIndex(r => r.id === id);
+    if (idx < 0) throw new Error('Record not found');
+    local.production[idx] = { ...local.production[idx], ...data };
+    this._saveLocal(local);
+    return local.production[idx];
+  },
+
+  async deleteProduction(id) {
+    if (this.isCloud()) {
+      const { error } = await this._client.from('production').delete().eq('id', id);
+      if (error) throw error;
+      this._notify();
+      return;
+    }
+
+    const local = this._loadLocal();
+    const before = local.production.length;
+    local.production = local.production.filter(r => r.id !== id);
+    if (local.production.length === before) throw new Error('Record not found');
+    this._saveLocal(local);
+  },
+
   async addDowntime(data) {
     if (this.isCloud()) {
       const { data: row, error } = await this._client
@@ -248,6 +284,49 @@ const DataStore = {
     local.downtime.push(record);
     this._saveLocal(local);
     return record;
+  },
+
+  async updateDowntime(id, data) {
+    if (this.isCloud()) {
+      const { data: row, error } = await this._client
+        .from('downtime')
+        .update(this._toDowntimeRow(data))
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      this._notify();
+      return this._mapDowntime(row);
+    }
+
+    const local = this._loadLocal();
+    const idx = local.downtime.findIndex(r => r.id === id);
+    if (idx < 0) throw new Error('Record not found');
+    local.downtime[idx] = { ...local.downtime[idx], ...data };
+    this._saveLocal(local);
+    return local.downtime[idx];
+  },
+
+  async deleteDowntime(id) {
+    if (this.isCloud()) {
+      const { error } = await this._client.from('downtime').delete().eq('id', id);
+      if (error) throw error;
+      this._notify();
+      return;
+    }
+
+    const local = this._loadLocal();
+    const before = local.downtime.length;
+    local.downtime = local.downtime.filter(r => r.id !== id);
+    if (local.downtime.length === before) throw new Error('Record not found');
+    this._saveLocal(local);
+  },
+
+  canMutateRecord(id, kind) {
+    if (this.isCloud()) return true;
+    const local = this._loadLocal();
+    const list = kind === 'production' ? local.production : local.downtime;
+    return list.some(r => r.id === id);
   },
 
   async exportMergedJson() {
