@@ -30,6 +30,37 @@
   --perf-h: 130px;
 }
 
+/* SVG icons — แทน emoji ที่ Windows 10 แสดงไม่ได้ (เช่น 🪣) */
+.ith-ico {
+  display: inline-block;
+  width: 1.1em;
+  height: 1.1em;
+  vertical-align: -0.15em;
+  flex-shrink: 0;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+}
+.ith-ico--lg { width: 1.65em; height: 1.65em; vertical-align: -0.25em; }
+.ith-ico--xl { width: 28px; height: 28px; vertical-align: middle; }
+.ith-ico-wheel {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 2.2l1.1 3.4 3.6-.6-.8 3.5 3.3 1.8-3.3 1.8.8 3.5-3.6-.6L12 21.8l-1.1-3.4-3.6.6.8-3.5-3.3-1.8 3.3-1.8-.8-3.5 3.6.6z'/%3E%3Ccircle fill='black' cx='12' cy='12' r='3.2'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 2.2l1.1 3.4 3.6-.6-.8 3.5 3.3 1.8-3.3 1.8.8 3.5-3.6-.6L12 21.8l-1.1-3.4-3.6.6.8-3.5-3.3-1.8 3.3-1.8-.8-3.5 3.6.6z'/%3E%3Ccircle fill='black' cx='12' cy='12' r='3.2'/%3E%3C/svg%3E");
+}
+.ith-ico-bucket {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M5 7h14l-1.1 11H6.1L5 7zm1.4-5h11.2l.9 4H5.5l.9-4z'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M5 7h14l-1.1 11H6.1L5 7zm1.4-5h11.2l.9 4H5.5l.9-4z'/%3E%3C/svg%3E");
+}
+.logo-box .ith-ico { color: var(--ith-orange-light); }
+.form-card-header-icon .ith-ico { color: #fff; }
+.bucket-pill-inner .ith-ico { color: var(--ith-orange-dark); }
+.bucket-pill input:checked + .bucket-pill-inner .ith-ico { color: var(--ith-orange-dark); }
+.form-tab .ith-ico { margin-right: 4px; }
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html { scroll-behavior: smooth; }
@@ -805,6 +836,9 @@ body {
 }
 
 .login-logo span { color: var(--ith-orange-light); }
+.login-logo .ith-ico { color: var(--ith-orange-light); margin-right: 2px; }
+.card-head .ith-ico,
+.pie-title .ith-ico { margin-right: 5px; color: var(--ith-orange-dark); }
 
 .login-title {
   font-family: "Chakra Petch", Arial, sans-serif;
