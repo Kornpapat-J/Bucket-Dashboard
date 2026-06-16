@@ -257,13 +257,6 @@ body {
 .card-head.teal::before { background: linear-gradient(180deg, var(--ith-gray-dark), var(--ith-gray-mid)); }
 
 .bar-chart-wrap { position: relative; width: 100%; height: var(--bar-h); }
-.bar-scale-hint {
-  margin: 4px 0 0;
-  font-size: 0.62rem;
-  color: var(--ith-orange-dark);
-  font-weight: 600;
-  text-align: center;
-}
 .bar-by-bucket-wrap {
   margin-top: 10px;
   padding-top: 10px;

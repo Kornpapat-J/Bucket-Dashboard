@@ -284,16 +284,6 @@ function renderBarChart() {
 
   const disparity = getHourlyScaleDisparity(datasets);
   const useLog = disparity >= 20;
-  const hintEl = document.getElementById('barScaleHint');
-  if (hintEl) {
-    if (useLog) {
-      hintEl.hidden = false;
-      hintEl.textContent = 'กราฟรวมใช้สเกลลอการิทึมเพราะยอด Bucket ต่างกันมาก — ดูกราฟแยกด้านล่างเพื่อเทียบยอดชัดเจน';
-    } else {
-      hintEl.hidden = true;
-      hintEl.textContent = '';
-    }
-  }
 
   if (useLog) {
     datasets.forEach(ds => {
