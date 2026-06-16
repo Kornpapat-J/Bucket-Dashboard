@@ -21,7 +21,36 @@ const DataStore = {
       console.warn('Supabase JS not loaded');
       return;
     }
-    this._client = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+    this._client = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey, {
+      auth: { persistSession: true, autoRefreshToken: true }
+    });
+  },
+
+  async _ensureSession() {
+    if (!this._client) throw new Error('NO_CLIENT');
+    const { data: { session }, error } = await this._client.auth.getSession();
+    if (error) throw error;
+    if (!session) throw new Error('NOT_LOGGED_IN');
+    return session;
+  },
+
+  async _cloudDelete(table, id) {
+    await this._ensureSession();
+    const { data, error } = await this._client
+      .from(table)
+      .delete()
+      .eq('id', id)
+      .select('id');
+    if (error) {
+      const err = new Error(error.message || 'DELETE_FAILED');
+      err.code = error.code;
+      throw err;
+    }
+    if (!data?.length) {
+      const err = new Error('DELETE_BLOCKED');
+      err.code = '42501';
+      throw err;
+    }
   },
 
   onChange(fn) {
@@ -255,8 +284,7 @@ const DataStore = {
 
   async deleteProduction(id) {
     if (this.isCloud()) {
-      const { error } = await this._client.from('production').delete().eq('id', id);
-      if (error) throw error;
+      await this._cloudDelete('production', id);
       this._notify();
       return;
     }
@@ -309,8 +337,7 @@ const DataStore = {
 
   async deleteDowntime(id) {
     if (this.isCloud()) {
-      const { error } = await this._client.from('downtime').delete().eq('id', id);
-      if (error) throw error;
+      await this._cloudDelete('downtime', id);
       this._notify();
       return;
     }

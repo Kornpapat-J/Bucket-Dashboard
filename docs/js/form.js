@@ -458,10 +458,27 @@ async function handleRecentEdit(kind, id) {
   showToast('โหลดข้อมูลเพื่อแก้ไข — แก้แล้วกดบันทึกการแก้ไข');
 }
 
+function deleteErrorMessage(err) {
+  if (err?.message === 'NOT_LOGGED_IN') {
+    return 'กรุณา Login ใหม่แล้วลองลบอีกครั้ง';
+  }
+  if (err?.message === 'DELETE_BLOCKED' || err?.code === '42501') {
+    return 'ยังไม่มีสิทธิ์ลบใน Supabase — แจ้ง Admin รัน SQL ใน docs/supabase/schema-delete-policies.sql';
+  }
+  return err?.message || 'ลบไม่สำเร็จ';
+}
+
 async function handleRecentDelete(kind, id) {
   const list = kind === 'production' ? cachedData.production : cachedData.downtime;
-  const record = list.find(r => r.id === id);
-  if (!record) return;
+  const record = list.find(r => String(r.id) === String(id));
+  if (!record) {
+    showToast('ไม่พบรายการนี้ — กำลังโหลดข้อมูลใหม่', true);
+    try {
+      const allData = await API.getData();
+      loadRecentRecords(allData);
+    } catch { /* ignore */ }
+    return;
+  }
   const label = kind === 'production'
     ? `${record.bucketId} ${fmtNum(record.volumeBCM)} BCM`
     : `${record.bucketId} ${record.type}`;
@@ -478,29 +495,30 @@ async function handleRecentDelete(kind, id) {
     const allData = await API.getData();
     loadRecentRecords(allData);
     updateLocalCount();
-  } catch {
-    showToast('ลบไม่สำเร็จ', true);
+  } catch (err) {
+    console.error('delete failed', err);
+    showToast(deleteErrorMessage(err), true);
   }
 }
 
 function setupRecentActions() {
-  const onClick = (e) => {
+  const listEl = document.querySelector('.recent-list');
+  if (!listEl) return;
+  listEl.addEventListener('click', (e) => {
     const editBtn = e.target.closest('.btn-recent-edit');
     const delBtn = e.target.closest('.btn-recent-delete');
     if (editBtn) {
       e.preventDefault();
       e.stopPropagation();
-      handleRecentEdit(editBtn.dataset.kind, editBtn.dataset.id);
+      void handleRecentEdit(editBtn.dataset.kind, editBtn.dataset.id);
       return;
     }
     if (delBtn) {
       e.preventDefault();
       e.stopPropagation();
-      handleRecentDelete(delBtn.dataset.kind, delBtn.dataset.id);
+      void handleRecentDelete(delBtn.dataset.kind, delBtn.dataset.id);
     }
-  };
-  document.getElementById('recentProduction')?.addEventListener('click', onClick);
-  document.getElementById('recentDowntime')?.addEventListener('click', onClick);
+  });
 }
 
 function setupEditCancel() {

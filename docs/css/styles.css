@@ -890,6 +890,8 @@ body {
   display: flex;
   gap: 4px;
   flex-shrink: 0;
+  position: relative;
+  z-index: 1;
 }
 .btn-recent {
   font-family: "Sarabun", sans-serif;
@@ -897,6 +899,7 @@ body {
   font-weight: 600;
   padding: 8px 12px;
   min-height: 36px;
+  min-width: 64px;
   border-radius: 6px;
   border: 1px solid var(--border);
   background: #fff;
@@ -904,6 +907,8 @@ body {
   white-space: nowrap;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+  position: relative;
+  z-index: 2;
 }
 .btn-recent-edit {
   color: var(--ith-orange-dark);
