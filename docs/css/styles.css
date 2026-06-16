@@ -806,18 +806,54 @@ body {
 .recent-list h3 { font-family: "Chakra Petch", Arial, sans-serif; font-size: var(--fs-sm); color: var(--ith-gray-dark); margin-bottom: 0; }
 .recent-list-top {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
+  align-items: center;
+  justify-content: space-between;
   gap: 10px;
-  margin-bottom: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
 }
-.recent-filter-pills {
-  grid-template-columns: repeat(3, 1fr);
-  width: 100%;
+.recent-filter-bar {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
 }
-.bucket-pill--filter .bucket-pill-inner {
-  min-height: 40px;
-  font-size: 0.78rem;
+.recent-filter-chip {
+  cursor: pointer;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+}
+.recent-filter-chip input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.recent-filter-chip span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 4px 11px;
+  font-family: "Chakra Petch", Arial, sans-serif;
+  font-size: 0.66rem;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1px solid #d8dce0;
+  background: #fff;
+  color: var(--ith-gray-dark);
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.recent-filter-chip input:checked + span {
+  background: var(--ith-orange-dark);
+  border-color: var(--ith-orange-dark);
+  color: #fff;
+}
+.recent-filter-chip--b2 input:checked + span {
+  background: #3d3d3d;
+  border-color: #3d3d3d;
 }
 .recent-section-title {
   font-family: "Chakra Petch", Arial, sans-serif;
@@ -1158,7 +1194,6 @@ body {
     margin-left: 16px;
     margin-right: 16px;
   }
-  .recent-filter-pills { grid-template-columns: 1fr; }
   .recent-item { flex-wrap: wrap; }
   .recent-item-main { flex-direction: column; align-items: flex-start; width: 100%; }
   .recent-item-actions { width: 100%; justify-content: flex-end; }
