@@ -12,7 +12,6 @@ async function init() {
     updateModeNotice();
     const data = await API.getData();
     config = data.config || {};
-    populateBucketSelects();
     document.getElementById('prodDate').value = toISODate(new Date());
     document.getElementById('dtDate').value = toISODate(new Date());
     loadRecentRecords(data);
@@ -66,12 +65,7 @@ function updateLocalCount() {
 }
 
 function populateBucketSelects() {
-  const buckets = BUCKETS;
-  ['prodBucket', 'dtBucket'].forEach(id => {
-    const sel = document.getElementById(id);
-    if (!sel) return;
-    sel.innerHTML = buckets.map(b => `<option value="${b}">${b}</option>`).join('');
-  });
+  /* buckets hardcoded in HTML — Bucket 1 & 2 only */
 }
 
 function calcLevelProd(w, l, h) {
@@ -102,17 +96,19 @@ function updateCalculations() {
   const smuStart = parseFloat(document.getElementById('smuStart')?.value) || 0;
   const smuEnd = parseFloat(document.getElementById('smuEnd')?.value) || 0;
   const smuTotal = smuEnd > smuStart ? Math.round((smuEnd - smuStart) * 100) / 100 : 0;
+  const rate = smuTotal > 0 ? Math.round((totalProduct / smuTotal) * 100) / 100 : 0;
 
-  const totalEl = document.getElementById('prodTotalBCM');
-  const smuTotalEl = document.getElementById('smuTotal');
-  const rateEl = document.getElementById('prodRate');
+  const setDisplay = (id, val, hiddenId) => {
+    const display = document.getElementById(id);
+    const hidden = document.getElementById(hiddenId);
+    const text = val > 0 ? fmtNum(val) : '—';
+    if (display) display.textContent = text;
+    if (hidden) hidden.value = val > 0 ? String(val) : '';
+  };
 
-  if (totalEl) totalEl.value = totalProduct > 0 ? fmtNum(totalProduct) : '';
-  if (smuTotalEl) smuTotalEl.value = smuTotal > 0 ? smuTotal.toFixed(2) : '';
-  if (rateEl) {
-    const rate = smuTotal > 0 ? Math.round((totalProduct / smuTotal) * 100) / 100 : 0;
-    rateEl.value = rate > 0 ? fmtNum(rate) : '';
-  }
+  setDisplay('prodTotalBCMDisplay', totalProduct, 'prodTotalBCM');
+  setDisplay('smuTotalDisplay', smuTotal, 'smuTotal');
+  setDisplay('prodRateDisplay', rate, 'prodRate');
 }
 
 function setupProductionCalc() {
@@ -186,7 +182,7 @@ async function submitProduction(e) {
   const data = {
     date: form.date.value,
     shift: form.shift.value,
-    bucketId: form.bucketId.value,
+    bucketId: form.querySelector('input[name="bucketId"]:checked')?.value || 'Bucket 1',
     operatorName: form.operatorName.value.trim(),
     startTime: form.startTime.value,
     endTime: form.endTime.value,
