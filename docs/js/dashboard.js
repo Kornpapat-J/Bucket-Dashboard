@@ -167,15 +167,52 @@ function bcmTooltipLabel(ctx) {
   return `${ctx.dataset.label}: ${fmtNum(val)} BCM`;
 }
 
-function barLabelTextColor(bgColor) {
-  const hex = (typeof bgColor === 'string' && bgColor.startsWith('#')) ? bgColor : '#e8873a';
-  const h = hex.slice(1);
-  if (h.length < 6) return '#2d3236';
-  const r = parseInt(h.slice(0, 2), 16);
-  const g = parseInt(h.slice(2, 4), 16);
-  const b = parseInt(h.slice(4, 6), 16);
-  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return lum > 0.6 ? '#2d3236' : '#fff8f0';
+function roundRect(ctx, x, y, w, h, r) {
+  const rad = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rad, y);
+  ctx.arcTo(x + w, y, x + w, y + h, rad);
+  ctx.arcTo(x + w, y + h, x, y + h, rad);
+  ctx.arcTo(x, y + h, x, y, rad);
+  ctx.arcTo(x, y, x + w, y, rad);
+  ctx.closePath();
+}
+
+function drawBarValueBadge(ctx, x, barTop, text, accentColor, chartArea) {
+  const accent = accentColor || '#e8873a';
+  const font = '600 10px "Chakra Petch", Arial, sans-serif';
+  ctx.font = font;
+  const padX = 7;
+  const padY = 4;
+  const textW = ctx.measureText(text).width;
+  const badgeW = textW + padX * 2;
+  const badgeH = 18;
+  const left = x - badgeW / 2;
+  let top = barTop - badgeH - 5;
+  if (top < chartArea.top + 2) top = barTop + 6;
+
+  ctx.save();
+  roundRect(ctx, left, top + 1.5, badgeW, badgeH, 6);
+  ctx.fillStyle = 'rgba(45, 50, 54, 0.1)';
+  ctx.fill();
+
+  roundRect(ctx, left, top, badgeW, badgeH, 6);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 1.25;
+  ctx.stroke();
+
+  ctx.fillStyle = accent;
+  roundRect(ctx, left + 1, top + 1, 3, badgeH - 2, 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#2d3236';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = font;
+  ctx.fillText(text, x, top + badgeH / 2);
+  ctx.restore();
 }
 
 const barValueLabelPlugin = {
@@ -186,8 +223,6 @@ const barValueLabelPlugin = {
     const yScale = chart.scales.y;
     const base = yScale.getPixelForValue(yScale.min ?? 0);
     ctx.save();
-    ctx.font = 'bold 9px Chakra Petch';
-    ctx.textAlign = 'center';
     data.datasets.forEach((ds, di) => {
       const meta = chart.getDatasetMeta(di);
       const barColor = ds.backgroundColor || '#e8873a';
@@ -196,15 +231,7 @@ const barValueLabelPlugin = {
         if (!val || val <= 0) return;
         const { x, y } = bar.getProps(['x', 'y'], true);
         const barTop = Math.min(y, base);
-        const barH = Math.abs(base - barTop);
-        const label = fmtNum(val);
-        if (barH < 18) {
-          ctx.fillStyle = barColor;
-          ctx.fillText(label, x, barTop - 4);
-        } else {
-          ctx.fillStyle = barLabelTextColor(barColor);
-          ctx.fillText(label, x, barTop + 11);
-        }
+        drawBarValueBadge(ctx, x, barTop, fmtNum(val), barColor, chartArea);
       });
     });
     ctx.restore();
@@ -263,6 +290,7 @@ function renderBarByBucketCharts(buckets, hourly, labels) {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { top: 22 } },
         plugins: {
           legend: { display: false },
           tooltip: { callbacks: { label: bcmTooltipLabel } }
