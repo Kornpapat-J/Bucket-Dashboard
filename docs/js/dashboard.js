@@ -1,4 +1,4 @@
-/* global Chart, API, formatDateTH, toISODate, calcDuration, formatDuration, filterByShift,
+/* global Chart, API, DataStore, Auth, showToast, formatDateTH, toISODate, calcDuration, formatDuration, filterByShift,
    aggregateHourly, getHourLabels, hourLabelToNum, calcWorkingHours, sumByBucket,
    sumDowntimeByBucket, sumDowntimeByType, getBucketColor, fmtNum, DT_TYPES */
 
@@ -18,6 +18,7 @@ let countdownTimer = null;
 
 async function loadData() {
   try {
+    if (typeof closeTargetEditor === 'function') closeTargetEditor();
     const data = await API.getByDate(state.date);
     state.production = data.production;
     state.downtime = data.downtime;
@@ -43,11 +44,86 @@ function renderAll() {
   renderBarChart();
   renderLineChart();
   renderPieChart();
-  renderDonut();
   renderRadarBuckets();
   renderRadarTypes();
   renderDowntimeTable();
   updateBadges();
+  updateTargetDisplay();
+}
+
+function updateTargetDisplay() {
+  const daily = state.config.dailyTarget || 5000;
+  const el = document.getElementById('dailyTarget');
+  if (el) el.textContent = `${fmtNum(daily)} BCM/Day`;
+}
+
+function openTargetEditor() {
+  if (!Auth.isAdmin()) return;
+  document.getElementById('targetView').hidden = true;
+  const editor = document.getElementById('targetEditor');
+  editor.hidden = false;
+  document.getElementById('targetDateLabel').textContent = formatDateTH(state.date);
+  document.getElementById('inputDailyTarget').value = state.config.dailyTarget || 5000;
+  document.getElementById('inputHourlyTarget').value = state.config.hourlyTarget || 400;
+  document.getElementById('inputDailyTarget').focus();
+}
+
+function closeTargetEditor() {
+  document.getElementById('targetEditor').hidden = true;
+  document.getElementById('targetView').hidden = false;
+}
+
+async function saveTargetEditor() {
+  const daily = parseFloat(document.getElementById('inputDailyTarget').value);
+  const hourly = parseFloat(document.getElementById('inputHourlyTarget').value);
+  if (!daily || daily <= 0) {
+    showToast('กรุณากรอกเป้า BCM/วัน', true);
+    return;
+  }
+  if (!hourly || hourly <= 0) {
+    showToast('กรุณากรอกเป้า BCM/ชม.', true);
+    return;
+  }
+  try {
+    await DataStore.saveTargets(state.date, daily, hourly);
+    state.config.dailyTarget = daily;
+    state.config.hourlyTarget = hourly;
+    closeTargetEditor();
+    renderBarChart();
+    renderPieChart();
+    updateTargetDisplay();
+    showToast('บันทึกเป้าหมายแล้ว ✓');
+  } catch {
+    showToast('บันทึกเป้าหมายไม่สำเร็จ', true);
+  }
+}
+
+function setupTargetEditor() {
+  const card = document.getElementById('targetCard');
+  const btnEdit = document.getElementById('btnEditTarget');
+  if (!Auth.isAdmin()) {
+    btnEdit?.remove();
+    return;
+  }
+  card?.classList.add('target-card--editable');
+  const hint = document.createElement('p');
+  hint.className = 'target-hint-admin';
+  hint.textContent = 'คลิกการ์ดหรือ ✎ เพื่อตั้งเป้าหมายวันนี้';
+  card?.appendChild(hint);
+  btnEdit?.addEventListener('click', (e) => { e.stopPropagation(); openTargetEditor(); });
+  card?.addEventListener('click', () => {
+    if (!document.getElementById('targetEditor').hidden) return;
+    openTargetEditor();
+  });
+  document.getElementById('btnSaveTarget')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    saveTargetEditor();
+  });
+  document.getElementById('btnCancelTarget')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeTargetEditor();
+  });
+  document.getElementById('targetEditor')?.addEventListener('click', (e) => e.stopPropagation());
 }
 
 function updateBadges() {
@@ -420,6 +496,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btnLogout')?.addEventListener('click', () => Auth.logout());
   if (!Auth.isAdmin()) {
     document.querySelector('a[href="form.html"]')?.remove();
+  } else {
+    setupTargetEditor();
   }
   await DataStore.init();
   setupShiftButtons();

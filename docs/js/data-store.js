@@ -1,6 +1,7 @@
 /* global SUPABASE_CONFIG, genId, getDataUrl */
 
 const LOCAL_KEY = 'bucket_dashboard_local';
+const TARGETS_LOCAL_KEY = 'bucket_daily_targets';
 
 const DataStore = {
   _client: null,
@@ -157,11 +158,60 @@ const DataStore = {
 
   async getByDate(date) {
     const all = await this.getData();
+    const targets = await this.getTargets(date, all.config || {});
     return {
-      config: all.config,
+      config: { ...all.config, dailyTarget: targets.dailyTarget, hourlyTarget: targets.hourlyTarget },
       production: all.production.filter(r => r.date === date),
       downtime: all.downtime.filter(r => r.date === date)
     };
+  },
+
+  async getTargets(date, defaultCfg = {}) {
+    const fallback = {
+      dailyTarget: Number(defaultCfg.dailyTarget) || 5000,
+      hourlyTarget: Number(defaultCfg.hourlyTarget) || 400
+    };
+    if (this.isCloud() && this._client) {
+      try {
+        const { data, error } = await this._client
+          .from('daily_targets')
+          .select('daily_target, hourly_target')
+          .eq('date', date)
+          .maybeSingle();
+        if (!error && data) {
+          return {
+            dailyTarget: Number(data.daily_target),
+            hourlyTarget: Number(data.hourly_target)
+          };
+        }
+      } catch { /* table อาจยังไม่ได้สร้าง */ }
+    }
+    try {
+      const all = JSON.parse(localStorage.getItem(TARGETS_LOCAL_KEY) || '{}');
+      if (all[date]) return all[date];
+    } catch { /* ignore */ }
+    return fallback;
+  },
+
+  async saveTargets(date, dailyTarget, hourlyTarget) {
+    const payload = {
+      dailyTarget: Number(dailyTarget),
+      hourlyTarget: Number(hourlyTarget)
+    };
+    if (this.isCloud() && this._client) {
+      try {
+        await this._client.from('daily_targets').upsert({
+          date,
+          daily_target: payload.dailyTarget,
+          hourly_target: payload.hourlyTarget,
+          updated_at: new Date().toISOString()
+        });
+      } catch { /* fallback local */ }
+    }
+    const all = JSON.parse(localStorage.getItem(TARGETS_LOCAL_KEY) || '{}');
+    all[date] = payload;
+    localStorage.setItem(TARGETS_LOCAL_KEY, JSON.stringify(all));
+    return payload;
   },
 
   async addProduction(data) {

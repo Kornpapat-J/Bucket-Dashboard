@@ -307,8 +307,97 @@ body {
 .total-value { font-family: "Chakra Petch", monospace; font-size: 0.75rem; font-weight: 800; color: var(--ith-gray-dark); }
 .total-box.productivity-card { background: var(--ith-orange-pale); border-color: var(--ith-orange-muted); }
 .total-box.productivity-card .total-label, .total-box.productivity-card .total-value { color: var(--ith-orange-dark); }
-.total-box.target-card { background: rgba(232, 135, 58, 0.08); border-color: rgba(232, 135, 58, 0.35); border-style: dashed; }
+.total-box.target-card { background: rgba(232, 135, 58, 0.08); border-color: rgba(232, 135, 58, 0.35); border-style: dashed; position: relative; }
+.total-box.target-card.target-card--editable { cursor: pointer; }
+.total-box.target-card.target-card--editable:hover { background: rgba(232, 135, 58, 0.14); border-color: var(--ith-orange); }
 .total-box.target-card .total-label, .target-value { color: var(--ith-orange); font-weight: 900; }
+.target-view { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.target-edit-btn {
+  margin-left: auto;
+  border: 1px solid rgba(232, 135, 58, 0.5);
+  background: #fff;
+  color: var(--ith-orange-dark);
+  border-radius: 5px;
+  width: 26px;
+  height: 26px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.target-edit-btn:hover { background: var(--ith-orange-pale); }
+.target-editor {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(232, 135, 58, 0.4);
+}
+.target-editor-title {
+  font-family: "Chakra Petch", Arial, sans-serif;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--ith-orange-dark);
+  margin-bottom: 8px;
+}
+.target-editor-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.target-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.target-field span {
+  font-family: "Chakra Petch", Arial, sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.target-field input {
+  border: 1px solid rgba(232, 135, 58, 0.45);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-family: "Chakra Petch", monospace;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--ith-orange-dark);
+  outline: none;
+  width: 100%;
+}
+.target-field input:focus {
+  border-color: var(--ith-orange);
+  box-shadow: 0 0 0 2px rgba(232, 135, 58, 0.15);
+}
+.target-editor-actions { display: flex; gap: 6px; }
+.btn-target-save,
+.btn-target-cancel {
+  flex: 1;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-family: "Chakra Petch", Arial, sans-serif;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+}
+.btn-target-save {
+  background: linear-gradient(135deg, var(--ith-orange-dark), var(--ith-orange));
+  color: #fff;
+}
+.btn-target-cancel {
+  background: var(--ith-gray-pale);
+  color: var(--ith-gray-dark);
+  border: 1px solid var(--border);
+}
+.target-hint-admin {
+  font-size: 0.65rem;
+  color: var(--muted);
+  margin-top: 4px;
+  font-style: italic;
+}
 
 .donut-section { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
 .donut-inner { display: flex; gap: 10px; align-items: center; }
