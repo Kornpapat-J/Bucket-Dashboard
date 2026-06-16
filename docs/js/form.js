@@ -24,14 +24,11 @@ function updateModeNotice() {
   if (!notice) return;
 
   if (DataStore.isCloud()) {
-    notice.className = 'github-notice cloud-notice';
-    notice.innerHTML = `
-      <strong>☁️ โหมด Cloud — บันทึกร่วมกันทุกเครื่อง</strong>
-      <p>เมื่อกดบันทึก ข้อมูลจะเข้า Database ทันที ทุกคนที่เปิด Dashboard จะเห็นอัปเดตอัตโนมัติ ไม่ต้อง push GitHub</p>
-      <p class="local-count">✓ เชื่อมต่อ Supabase แล้ว</p>`;
+    notice.style.display = 'none';
     return;
   }
 
+  notice.style.display = '';
   notice.className = 'github-notice';
   notice.innerHTML = `
     <strong>📌 โหมดทดสอบ (ยังไม่มี Database)</strong>
