@@ -2,7 +2,7 @@
   "config": {
     "dailyTarget": 5000,
     "hourlyTarget": 400,
-    "buckets": ["Bucket 1", "Bucket 2", "Bucket 3", "Bucket 4", "Bucket 5"]
+    "buckets": ["Bucket 1", "Bucket 2"]
   },
   "production": [
     {
@@ -48,7 +48,7 @@
       "id": "demo-p4",
       "date": "2026-06-15",
       "shift": "day",
-      "bucketId": "Bucket 3",
+      "bucketId": "Bucket 2",
       "operatorName": "ประเสริฐ มั่นคง",
       "startTime": "08:00",
       "endTime": "10:00",

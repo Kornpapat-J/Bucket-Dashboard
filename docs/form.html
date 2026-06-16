@@ -21,61 +21,131 @@
 
   <div class="form-page">
     <div class="form-card">
-      <h1 class="form-title">ฟอร์มบันทึกข้อมูลการขุดดิน</h1>
-      <p class="form-subtitle">กรอกข้อมูลด้านล่างเพื่อนำไปแสดงบน Dashboard</p>
+      <h1 class="form-title">Performance Bucket Wheel</h1>
+      <p class="form-subtitle">บันทึกผลการขุดรายชั่วโมง — ตามแบบฟอร์มกระดาษ</p>
       <div class="github-notice" id="githubNotice"></div>
 
       <div class="form-tabs">
-        <button class="form-tab active" data-tab="production">🪣 บันทึกการขุดดิน</button>
+        <button class="form-tab active" data-tab="production">🪣 Performance Bucket Wheel</button>
         <button class="form-tab" data-tab="downtime">⏰ บันทึก Downtime</button>
       </div>
 
       <!-- Production Form -->
       <div id="panelProduction">
         <form id="formProduction">
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="prodDate">วันที่ *</label>
-              <input type="date" id="prodDate" name="date" required>
+          <div class="perf-sheet">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="prodBucket">Bucket Wheel No. *</label>
+                <select id="prodBucket" name="bucketId" required></select>
+              </div>
+              <div class="form-group">
+                <label for="prodDate">วันที่ *</label>
+                <input type="date" id="prodDate" name="date" required>
+              </div>
+              <div class="form-group">
+                <label for="prodShift">กะงาน *</label>
+                <select id="prodShift" name="shift" required>
+                  <option value="day">☀️ Day</option>
+                  <option value="night">🌙 Night</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="prodHour">Hr. ที่ *</label>
+                <input type="number" id="prodHour" name="hourNo" min="1" max="24" placeholder="เช่น 2" required>
+              </div>
             </div>
-            <div class="form-group">
-              <label for="prodShift">กะงาน *</label>
-              <select id="prodShift" name="shift" required>
-                <option value="day">☀️ กะกลางวัน (Day)</option>
-                <option value="night">🌙 กะกลางคืน (Night)</option>
-              </select>
+
+            <div class="perf-levels">
+              <h3 class="perf-section-title">รายละเอียดการขุด — B1 / B2 / B3</h3>
+              <div class="perf-table-wrap">
+                <table class="perf-table">
+                  <thead>
+                    <tr>
+                      <th>Level</th>
+                      <th>กว้าง (m)</th>
+                      <th>ยาว (m)</th>
+                      <th>สูง (m)</th>
+                      <th>Production (BCM)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="perf-level-label">B1 บน</td>
+                      <td><input type="number" name="b1Width" min="0" step="0.01" class="perf-dim" data-level="b1" data-dim="width"></td>
+                      <td><input type="number" name="b1Length" min="0" step="0.01" class="perf-dim" data-level="b1" data-dim="length"></td>
+                      <td><input type="number" name="b1Height" min="0" step="0.01" class="perf-dim" data-level="b1" data-dim="height"></td>
+                      <td><input type="text" id="b1Prod" class="perf-readonly" readonly tabindex="-1"></td>
+                    </tr>
+                    <tr>
+                      <td class="perf-level-label">B2 กลาง</td>
+                      <td><input type="number" name="b2Width" min="0" step="0.01" class="perf-dim" data-level="b2" data-dim="width"></td>
+                      <td><input type="number" name="b2Length" min="0" step="0.01" class="perf-dim" data-level="b2" data-dim="length"></td>
+                      <td><input type="number" name="b2Height" min="0" step="0.01" class="perf-dim" data-level="b2" data-dim="height"></td>
+                      <td><input type="text" id="b2Prod" class="perf-readonly" readonly tabindex="-1"></td>
+                    </tr>
+                    <tr>
+                      <td class="perf-level-label">B3 ล่าง</td>
+                      <td><input type="number" name="b3Width" min="0" step="0.01" class="perf-dim" data-level="b3" data-dim="width"></td>
+                      <td><input type="number" name="b3Length" min="0" step="0.01" class="perf-dim" data-level="b3" data-dim="length"></td>
+                      <td><input type="number" name="b3Height" min="0" step="0.01" class="perf-dim" data-level="b3" data-dim="height"></td>
+                      <td><input type="text" id="b3Prod" class="perf-readonly" readonly tabindex="-1"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
-            <div class="form-group">
-              <label for="prodBucket">หมายเลข Bucket *</label>
-              <select id="prodBucket" name="bucketId" required></select>
+
+            <div class="perf-summary">
+              <h3 class="perf-section-title">สรุป</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="prodTotalBCM">1. Product รวม (BCM)</label>
+                  <input type="text" id="prodTotalBCM" class="perf-readonly" readonly tabindex="-1">
+                </div>
+                <div class="form-group">
+                  <label for="prodRate">3. Production Rate (BCM/Hr.)</label>
+                  <input type="text" id="prodRate" class="perf-readonly" readonly tabindex="-1">
+                </div>
+              </div>
+              <p class="perf-smu-label">2. SMU</p>
+              <div class="form-grid perf-smu-grid">
+                <div class="form-group">
+                  <label for="smuStart">SMU เริ่ม</label>
+                  <input type="number" id="smuStart" name="smuStart" min="0" step="0.1" placeholder="เช่น 12345">
+                </div>
+                <div class="form-group">
+                  <label for="prodStart">เวลา เริ่ม *</label>
+                  <input type="time" id="prodStart" name="startTime" required>
+                </div>
+                <div class="form-group">
+                  <label for="smuEnd">SMU จบ</label>
+                  <input type="number" id="smuEnd" name="smuEnd" min="0" step="0.1" placeholder="เช่น 12346">
+                </div>
+                <div class="form-group">
+                  <label for="prodEnd">เวลา จบ *</label>
+                  <input type="time" id="prodEnd" name="endTime" required>
+                </div>
+                <div class="form-group">
+                  <label for="smuTotal">SMU รวม (Hr.)</label>
+                  <input type="text" id="smuTotal" class="perf-readonly" readonly tabindex="-1">
+                </div>
+              </div>
             </div>
-            <div class="form-group">
-              <label for="prodOperator">ชื่อพนักงาน/ผู้ปฏิบัติงาน *</label>
-              <input type="text" id="prodOperator" name="operatorName" placeholder="เช่น สมชาย ใจดี" required>
-            </div>
-            <div class="form-group">
-              <label for="prodStart">เวลาเริ่ม *</label>
-              <input type="time" id="prodStart" name="startTime" required>
-            </div>
-            <div class="form-group">
-              <label for="prodEnd">เวลาสิ้นสุด *</label>
-              <input type="time" id="prodEnd" name="endTime" required>
-            </div>
-            <div class="form-group">
-              <label for="prodVolume">ปริมาณขุด (BCM) *</label>
-              <input type="number" id="prodVolume" name="volumeBCM" min="0" step="0.1" placeholder="เช่น 380" required>
-            </div>
-            <div class="form-group">
-              <label for="prodLocation">โซน/ตำแหน่ง</label>
-              <input type="text" id="prodLocation" name="location" placeholder="เช่น Zone A">
-            </div>
-            <div class="form-group full">
-              <label for="prodNote">หมายเหตุ</label>
-              <textarea id="prodNote" name="note" placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"></textarea>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="prodOperator">Operator *</label>
+                <input type="text" id="prodOperator" name="operatorName" placeholder="รหัส/ชื่อ Operator" required>
+              </div>
+              <div class="form-group">
+                <label for="prodRecordedBy">ผู้บันทึก *</label>
+                <input type="text" id="prodRecordedBy" name="recordedBy" placeholder="ชื่อผู้บันทึก" required>
+              </div>
             </div>
           </div>
           <div class="form-actions">
-            <button type="submit" class="btn-primary">💾 บันทึกการขุดดิน</button>
+            <button type="submit" class="btn-primary">💾 บันทึก</button>
             <button type="reset" class="btn-secondary">ล้างฟอร์ม</button>
           </div>
         </form>
@@ -138,7 +208,7 @@
       </div>
 
       <div class="recent-list">
-        <h3>📋 รายการที่บันทึกวันนี้ — การขุดดิน</h3>
+        <h3>📋 รายการที่บันทึกวันนี้ — Performance</h3>
         <div id="recentProduction"></div>
         <h3 style="margin-top:12px">📋 รายการที่บันทึกวันนี้ — Downtime</h3>
         <div id="recentDowntime"></div>

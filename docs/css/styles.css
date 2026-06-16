@@ -352,7 +352,7 @@ body {
 .footer-txt { font-family: "Chakra Petch", monospace; font-size: var(--fs-xs); color: var(--ith-gray); font-weight: 600; }
 
 /* Form page */
-.form-page { max-width: 720px; margin: 0 auto; padding: 16px; }
+.form-page { max-width: 900px; margin: 0 auto; padding: 16px; }
 .form-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); padding: 20px 24px; }
 .form-title { font-family: "Chakra Petch", Arial, sans-serif; font-size: 1.2rem; font-weight: 700; color: var(--ith-gray-dark); margin-bottom: 4px; }
 .form-subtitle { font-size: var(--fs-sm); color: var(--muted); margin-bottom: 16px; }
@@ -432,6 +432,82 @@ body {
   line-height: 1.7;
 }
 .upload-steps li { margin-bottom: 4px; }
+
+/* Performance Bucket Wheel form */
+.perf-sheet { display: flex; flex-direction: column; gap: 16px; }
+.perf-section-title {
+  font-family: "Chakra Petch", Arial, sans-serif;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--ith-orange-dark);
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--ith-orange-pale);
+}
+.perf-table-wrap { overflow-x: auto; }
+.perf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+.perf-table th {
+  background: var(--ith-gray-pale);
+  font-family: "Chakra Petch", Arial, sans-serif;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--ith-gray-dark);
+  padding: 8px 6px;
+  text-align: center;
+  border: 1px solid var(--border);
+}
+.perf-table td {
+  padding: 4px;
+  border: 1px solid var(--border);
+  vertical-align: middle;
+}
+.perf-level-label {
+  font-family: "Chakra Petch", Arial, sans-serif;
+  font-weight: 700;
+  font-size: var(--fs-xs);
+  color: var(--ith-gray-dark);
+  white-space: nowrap;
+  padding: 8px 10px !important;
+  background: var(--ith-orange-pale);
+}
+.perf-table input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-family: "Sarabun", Arial, sans-serif;
+  font-size: var(--fs-sm);
+  outline: none;
+  box-sizing: border-box;
+}
+.perf-table input:focus { border-color: var(--ith-orange); }
+.perf-readonly {
+  background: var(--ith-gray-pale) !important;
+  color: var(--ith-orange-dark);
+  font-weight: 700;
+  text-align: right;
+  cursor: default;
+}
+.perf-summary {
+  background: var(--ith-gray-pale);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.perf-smu-label {
+  font-family: "Chakra Petch", Arial, sans-serif;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: #37474f;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 8px 0 4px;
+}
+.perf-smu-grid { margin-top: 4px; }
 
 @media (max-width: 1199px) {
   .body-row { flex-wrap: wrap; }

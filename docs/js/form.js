@@ -1,6 +1,9 @@
 /* global API, DataStore, showToast, formatDuration, calcDuration, toISODate, fmtNum */
 
-let config = { buckets: [] };
+const BUCKETS = ['Bucket 1', 'Bucket 2'];
+const LEVELS = ['b1', 'b2', 'b3'];
+
+let config = { buckets: BUCKETS };
 let activeTab = 'production';
 
 async function init() {
@@ -14,6 +17,7 @@ async function init() {
     document.getElementById('dtDate').value = toISODate(new Date());
     loadRecentRecords(data);
     updateLocalCount();
+    updateCalculations();
   } catch (err) {
     showToast('ไม่สามารถโหลดข้อมูลได้', true);
   }
@@ -62,10 +66,89 @@ function updateLocalCount() {
 }
 
 function populateBucketSelects() {
-  const buckets = config.buckets || ['Bucket 1', 'Bucket 2', 'Bucket 3'];
+  const buckets = BUCKETS;
   ['prodBucket', 'dtBucket'].forEach(id => {
     const sel = document.getElementById(id);
+    if (!sel) return;
     sel.innerHTML = buckets.map(b => `<option value="${b}">${b}</option>`).join('');
+  });
+}
+
+function calcLevelProd(w, l, h) {
+  const prod = (parseFloat(w) || 0) * (parseFloat(l) || 0) * (parseFloat(h) || 0);
+  return Math.round(prod * 100) / 100;
+}
+
+function getLevelDims(level) {
+  const form = document.getElementById('formProduction');
+  return {
+    width: parseFloat(form[`${level}Width`]?.value) || 0,
+    length: parseFloat(form[`${level}Length`]?.value) || 0,
+    height: parseFloat(form[`${level}Height`]?.value) || 0
+  };
+}
+
+function updateCalculations() {
+  let totalProduct = 0;
+
+  LEVELS.forEach(level => {
+    const dims = getLevelDims(level);
+    const prod = calcLevelProd(dims.width, dims.length, dims.height);
+    const el = document.getElementById(`${level}Prod`);
+    if (el) el.value = prod > 0 ? fmtNum(prod) : '';
+    totalProduct += prod;
+  });
+
+  const smuStart = parseFloat(document.getElementById('smuStart')?.value) || 0;
+  const smuEnd = parseFloat(document.getElementById('smuEnd')?.value) || 0;
+  const smuTotal = smuEnd > smuStart ? Math.round((smuEnd - smuStart) * 100) / 100 : 0;
+
+  const totalEl = document.getElementById('prodTotalBCM');
+  const smuTotalEl = document.getElementById('smuTotal');
+  const rateEl = document.getElementById('prodRate');
+
+  if (totalEl) totalEl.value = totalProduct > 0 ? fmtNum(totalProduct) : '';
+  if (smuTotalEl) smuTotalEl.value = smuTotal > 0 ? smuTotal.toFixed(2) : '';
+  if (rateEl) {
+    const rate = smuTotal > 0 ? Math.round((totalProduct / smuTotal) * 100) / 100 : 0;
+    rateEl.value = rate > 0 ? fmtNum(rate) : '';
+  }
+}
+
+function setupProductionCalc() {
+  document.querySelectorAll('.perf-dim, #smuStart, #smuEnd').forEach(el => {
+    el.addEventListener('input', updateCalculations);
+  });
+  document.getElementById('formProduction')?.addEventListener('reset', () => {
+    setTimeout(updateCalculations, 0);
+  });
+}
+
+function parsePerfNote(note) {
+  if (!note) return null;
+  try { return JSON.parse(note); } catch { return null; }
+}
+
+function buildPerfNote(form) {
+  const levels = {};
+  LEVELS.forEach(level => {
+    const dims = getLevelDims(level);
+    levels[level] = { ...dims, production: calcLevelProd(dims.width, dims.length, dims.height) };
+  });
+
+  const smuStart = parseFloat(form.smuStart.value) || 0;
+  const smuEnd = parseFloat(form.smuEnd.value) || 0;
+  const smuTotal = smuEnd > smuStart ? Math.round((smuEnd - smuStart) * 100) / 100 : 0;
+  const totalProduct = LEVELS.reduce((sum, lv) => sum + levels[lv].production, 0);
+  const productionRate = smuTotal > 0 ? Math.round((totalProduct / smuTotal) * 100) / 100 : 0;
+
+  return JSON.stringify({
+    hourNo: parseInt(form.hourNo.value, 10),
+    levels,
+    smuStart,
+    smuEnd,
+    smuTotal,
+    productionRate
   });
 }
 
@@ -93,6 +176,13 @@ function setupOngoingToggle() {
 async function submitProduction(e) {
   e.preventDefault();
   const form = e.target;
+  updateCalculations();
+
+  const totalProduct = LEVELS.reduce((sum, lv) => {
+    const dims = getLevelDims(lv);
+    return sum + calcLevelProd(dims.width, dims.length, dims.height);
+  }, 0);
+
   const data = {
     date: form.date.value,
     shift: form.shift.value,
@@ -100,21 +190,36 @@ async function submitProduction(e) {
     operatorName: form.operatorName.value.trim(),
     startTime: form.startTime.value,
     endTime: form.endTime.value,
-    volumeBCM: parseFloat(form.volumeBCM.value),
-    location: form.location.value.trim(),
-    note: form.note.value.trim()
+    volumeBCM: totalProduct,
+    location: form.recordedBy.value.trim(),
+    note: buildPerfNote(form)
   };
 
-  if (!data.operatorName || !data.volumeBCM || data.volumeBCM <= 0) {
-    showToast('กรุณากรอกข้อมูลให้ครบถ้วน', true);
+  if (!data.operatorName || !data.location) {
+    showToast('กรุณากรอก Operator และผู้บันทึก', true);
+    return;
+  }
+  if (!form.hourNo.value) {
+    showToast('กรุณากรอก Hr. ที่', true);
+    return;
+  }
+  if (totalProduct <= 0) {
+    showToast('กรุณากรอกขนาด B1/B2/B3 อย่างน้อย 1 ช่อง', true);
     return;
   }
 
   try {
     await API.addProduction(data);
-    showToast('บันทึกการขุดดินสำเร็จ ✓');
-    form.volumeBCM.value = '';
-    form.note.value = '';
+    showToast('บันทึกสำเร็จ ✓');
+    LEVELS.forEach(lv => {
+      form[`${lv}Width`].value = '';
+      form[`${lv}Length`].value = '';
+      form[`${lv}Height`].value = '';
+    });
+    form.smuStart.value = '';
+    form.smuEnd.value = '';
+    form.hourNo.value = '';
+    updateCalculations();
     const allData = await API.getData();
     loadRecentRecords(allData);
     updateLocalCount();
@@ -181,13 +286,19 @@ function clearLocalData() {
   showToast('ล้างข้อมูลชั่วคราวแล้ว');
 }
 
+function formatProdRecent(r) {
+  const meta = parsePerfNote(r.note);
+  const hour = meta?.hourNo ? `Hr.${meta.hourNo}` : `${r.startTime}-${r.endTime}`;
+  return `<div class="recent-item"><span>${r.bucketId} — ${hour}</span><span>${fmtNum(r.volumeBCM)} BCM (${r.operatorName})</span></div>`;
+}
+
 function loadRecentRecords(data) {
   const today = toISODate(new Date());
   const recentProd = data.production.filter(r => r.date === today).slice(-5).reverse();
   const recentDt = data.downtime.filter(r => r.date === today).slice(-5).reverse();
 
   document.getElementById('recentProduction').innerHTML = recentProd.length
-    ? recentProd.map(r => `<div class="recent-item"><span>${r.bucketId} — ${r.operatorName}</span><span>${fmtNum(r.volumeBCM)} BCM (${r.startTime}-${r.endTime})</span></div>`).join('')
+    ? recentProd.map(formatProdRecent).join('')
     : '<div class="dt-empty">ยังไม่มีรายการวันนี้</div>';
 
   document.getElementById('recentDowntime').innerHTML = recentDt.length
@@ -203,6 +314,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btnLogout')?.addEventListener('click', () => Auth.logout());
   setupTabs();
   setupOngoingToggle();
+  setupProductionCalc();
   document.getElementById('formProduction').addEventListener('submit', submitProduction);
   document.getElementById('formDowntime').addEventListener('submit', submitDowntime);
   init();
