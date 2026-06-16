@@ -9,7 +9,7 @@ let state = {
   config: {},
   production: [],
   downtime: [],
-  charts: {}
+  charts: { barByBucket: {} }
 };
 
 const REFRESH_SEC = 120;
@@ -149,6 +149,122 @@ function updateBadges() {
   document.getElementById('dtOngoing').textContent = `${ongoing} Ongoing`;
 }
 
+function bucketChartId(bucket) {
+  return 'barBucket_' + bucket.replace(/\s+/g, '_');
+}
+
+function getHourlyScaleDisparity(datasets) {
+  const positives = datasets.flatMap(d => d.data).filter(v => v > 0);
+  if (positives.length < 2) return 1;
+  const maxV = Math.max(...positives);
+  const minV = Math.min(...positives);
+  return minV > 0 ? maxV / minV : maxV;
+}
+
+function bcmTooltipLabel(ctx) {
+  const val = ctx.parsed.y;
+  if (val == null || val <= 0) return null;
+  return `${ctx.dataset.label}: ${fmtNum(val)} BCM`;
+}
+
+const barValueLabelPlugin = {
+  id: 'barValueLabels',
+  afterDatasetsDraw(chart) {
+    const { ctx, data, chartArea } = chart;
+    if (!chartArea) return;
+    const yScale = chart.scales.y;
+    const base = yScale.getPixelForValue(yScale.min ?? 0);
+    ctx.save();
+    ctx.font = 'bold 9px Chakra Petch';
+    ctx.textAlign = 'center';
+    data.datasets.forEach((ds, di) => {
+      const meta = chart.getDatasetMeta(di);
+      meta.data.forEach((bar, i) => {
+        const val = ds.data[i];
+        if (!val || val <= 0) return;
+        const { x, y } = bar.getProps(['x', 'y'], true);
+        const barTop = Math.min(y, base);
+        const barH = Math.abs(base - barTop);
+        const label = fmtNum(val);
+        if (barH < 18) {
+          ctx.fillStyle = ds.backgroundColor || '#e8873a';
+          ctx.fillText(label, x, barTop - 4);
+        } else {
+          ctx.fillStyle = '#fff';
+          ctx.fillText(label, x, barTop + 11);
+        }
+      });
+    });
+    ctx.restore();
+  }
+};
+
+function renderBarByBucketCharts(buckets, hourly, labels) {
+  const wrap = document.getElementById('barByBucketWrap');
+  const grid = document.getElementById('barByBucketGrid');
+  if (!wrap || !grid) return;
+
+  Object.values(state.charts.barByBucket || {}).forEach(c => c.destroy());
+  state.charts.barByBucket = {};
+
+  const activeBuckets = buckets.filter(b =>
+    labels.some(l => {
+      const h = hourLabelToNum(l);
+      return (hourly[h] && hourly[h][b]) > 0;
+    })
+  );
+
+  if (activeBuckets.length <= 1) {
+    wrap.hidden = true;
+    grid.innerHTML = '';
+    return;
+  }
+
+  wrap.hidden = false;
+  grid.innerHTML = activeBuckets.map(b => `
+    <div class="bar-bucket-mini">
+      <div class="bar-bucket-mini-head">
+        <span class="legend-dot" style="background:${getBucketColor(b, buckets)}"></span>${b}
+      </div>
+      <div class="bar-bucket-mini-wrap"><canvas id="${bucketChartId(b)}"></canvas></div>
+    </div>
+  `).join('');
+
+  activeBuckets.forEach(b => {
+    const ctx = document.getElementById(bucketChartId(b));
+    if (!ctx) return;
+    const data = labels.map(l => {
+      const h = hourLabelToNum(l);
+      return (hourly[h] && hourly[h][b]) || 0;
+    });
+    state.charts.barByBucket[b] = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: b,
+          data,
+          backgroundColor: getBucketColor(b, buckets),
+          borderRadius: 3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: bcmTooltipLabel } }
+        },
+        scales: {
+          x: { ticks: { font: { size: 8 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 12 } },
+          y: { beginAtZero: true, title: { display: true, text: 'BCM', font: { size: 9 } } }
+        }
+      },
+      plugins: [barValueLabelPlugin]
+    });
+  });
+}
+
 function renderBarChart() {
   const prod = getFilteredProduction();
   const buckets = state.config.buckets || [...new Set(prod.map(p => p.bucketId))];
@@ -163,8 +279,27 @@ function renderBarChart() {
       return (hourly[h] && hourly[h][b]) || 0;
     }),
     backgroundColor: getBucketColor(b, buckets),
-    stack: 'prod'
+    borderRadius: 2
   }));
+
+  const disparity = getHourlyScaleDisparity(datasets);
+  const useLog = disparity >= 20;
+  const hintEl = document.getElementById('barScaleHint');
+  if (hintEl) {
+    if (useLog) {
+      hintEl.hidden = false;
+      hintEl.textContent = 'กราฟรวมใช้สเกลลอการิทึมเพราะยอด Bucket ต่างกันมาก — ดูกราฟแยกด้านล่างเพื่อเทียบยอดชัดเจน';
+    } else {
+      hintEl.hidden = true;
+      hintEl.textContent = '';
+    }
+  }
+
+  if (useLog) {
+    datasets.forEach(ds => {
+      ds.data = ds.data.map(v => (v > 0 ? v : null));
+    });
+  }
 
   const ctx = document.getElementById('barChart');
   if (state.charts.bar) state.charts.bar.destroy();
@@ -177,19 +312,33 @@ function renderBarChart() {
       maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
-        annotation: undefined
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          callbacks: { label: bcmTooltipLabel }
+        }
       },
       scales: {
-        x: { stacked: true, ticks: { font: { size: 9 }, maxRotation: 45 } },
-        y: { stacked: true, beginAtZero: true, title: { display: true, text: 'BCM' } }
+        x: {
+          ticks: { font: { size: 9 }, maxRotation: 45 },
+          categoryPercentage: 0.82,
+          barPercentage: 0.9
+        },
+        y: {
+          beginAtZero: !useLog,
+          type: useLog ? 'logarithmic' : 'linear',
+          min: useLog ? 1 : undefined,
+          title: { display: true, text: useLog ? 'BCM (log)' : 'BCM' }
+        }
       }
     },
     plugins: [{
       id: 'targetLine',
       afterDraw(chart) {
         const { ctx: c, chartArea, scales } = chart;
-        if (!chartArea) return;
+        if (!chartArea || target <= 0) return;
         const y = scales.y.getPixelForValue(target);
+        if (y < chartArea.top || y > chartArea.bottom) return;
         c.save();
         c.strokeStyle = '#e8873a';
         c.setLineDash([6, 4]);
@@ -203,8 +352,10 @@ function renderBarChart() {
         c.fillText(`Target ${fmtNum(target)} BCM/Hr`, chartArea.right - 120, y - 4);
         c.restore();
       }
-    }]
+    }, barValueLabelPlugin]
   });
+
+  renderBarByBucketCharts(buckets, hourly, labels);
 
   const legend = document.getElementById('barLegend');
   legend.innerHTML = buckets.map(b =>

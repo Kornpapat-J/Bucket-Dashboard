@@ -62,7 +62,24 @@ function getBucketColor(name, buckets) {
 
 const DT_TYPES = ['OPT', 'EE', 'ME', 'Plan', 'Uncontrol', 'STB', 'PM', 'Other'];
 
+function parseRecordHourNo(note) {
+  if (!note) return null;
+  try {
+    const meta = JSON.parse(note);
+    const h = parseInt(meta.hourNo, 10);
+    return h >= 1 && h <= 24 ? h : null;
+  } catch {
+    return null;
+  }
+}
+
 function distributeHourlyVolume(record) {
+  const hourNo = parseRecordHourNo(record.note);
+  if (hourNo != null) {
+    const clockHour = (8 + hourNo - 1) % 24;
+    return [{ hour: clockHour, volume: record.volumeBCM }];
+  }
+
   const start = parseTime(record.startTime);
   const end = parseTime(record.endTime);
   if (start == null || end == null || end <= start) {

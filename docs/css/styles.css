@@ -257,6 +257,52 @@ body {
 .card-head.teal::before { background: linear-gradient(180deg, var(--ith-gray-dark), var(--ith-gray-mid)); }
 
 .bar-chart-wrap { position: relative; width: 100%; height: var(--bar-h); }
+.bar-scale-hint {
+  margin: 4px 0 0;
+  font-size: 0.62rem;
+  color: var(--ith-orange-dark);
+  font-weight: 600;
+  text-align: center;
+}
+.bar-by-bucket-wrap {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(232, 119, 34, 0.35);
+}
+.bar-by-bucket-title {
+  font-family: "Chakra Petch", Arial, sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--ith-gray-dark);
+  margin-bottom: 8px;
+  text-align: center;
+}
+.bar-by-bucket-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+.bar-bucket-mini {
+  background: linear-gradient(180deg, #fffaf5 0%, #fff 100%);
+  border: 1px solid rgba(232, 119, 34, 0.2);
+  border-radius: 8px;
+  padding: 8px;
+}
+.bar-bucket-mini-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: "Chakra Petch", Arial, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ith-gray-dark);
+  margin-bottom: 6px;
+}
+.bar-bucket-mini-wrap {
+  position: relative;
+  width: 100%;
+  height: 140px;
+}
 .perf-chart-wrap { position: relative; width: 100%; height: var(--perf-h); }
 
 .bar-head-row { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; flex-wrap: wrap; }
