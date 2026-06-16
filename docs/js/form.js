@@ -434,12 +434,6 @@ function setupRecentBucketFilter() {
   });
 }
 
-function setRecentBucketFilter(value) {
-  recentBucketFilter = value;
-  const input = document.querySelector(`#recentBucketFilter input[value="${CSS.escape(value)}"]`);
-  if (input) input.checked = true;
-}
-
 async function handleRecentEdit(kind, id) {
   if (kind === 'production') {
     const record = cachedData.production.find(r => r.id === id);
