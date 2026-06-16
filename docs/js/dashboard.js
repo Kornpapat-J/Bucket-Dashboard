@@ -340,6 +340,7 @@ function renderBarChart() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { top: 22 } },
       plugins: {
         legend: { display: false },
         tooltip: {
