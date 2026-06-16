@@ -425,15 +425,19 @@ function loadRecentRecords(data) {
 }
 
 function setupRecentBucketFilter() {
-  document.getElementById('recentBucketFilter')?.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-bucket]');
-    if (!btn) return;
-    recentBucketFilter = btn.dataset.bucket;
-    document.querySelectorAll('#recentBucketFilter [data-bucket]').forEach(b => {
-      b.classList.toggle('active', b === btn);
-    });
+  const wrap = document.getElementById('recentBucketFilter');
+  if (!wrap) return;
+  wrap.addEventListener('change', (e) => {
+    if (e.target.name !== 'recentBucketFilter') return;
+    recentBucketFilter = e.target.value;
     loadRecentRecords(cachedData);
   });
+}
+
+function setRecentBucketFilter(value) {
+  recentBucketFilter = value;
+  const input = document.querySelector(`#recentBucketFilter input[value="${CSS.escape(value)}"]`);
+  if (input) input.checked = true;
 }
 
 async function handleRecentEdit(kind, id) {
@@ -490,10 +494,14 @@ function setupRecentActions() {
     const editBtn = e.target.closest('.btn-recent-edit');
     const delBtn = e.target.closest('.btn-recent-delete');
     if (editBtn) {
+      e.preventDefault();
+      e.stopPropagation();
       handleRecentEdit(editBtn.dataset.kind, editBtn.dataset.id);
       return;
     }
     if (delBtn) {
+      e.preventDefault();
+      e.stopPropagation();
       handleRecentDelete(delBtn.dataset.kind, delBtn.dataset.id);
     }
   };
@@ -532,9 +540,7 @@ function setupEditCancel() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-  await Auth.requireAdmin('index.html');
-  document.getElementById('btnLogout')?.addEventListener('click', () => Auth.logout());
+document.addEventListener('DOMContentLoaded', () => {
   setupTabs();
   setupOngoingToggle();
   setupProductionCalc();
@@ -543,5 +549,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupEditCancel();
   document.getElementById('formProduction').addEventListener('submit', submitProduction);
   document.getElementById('formDowntime').addEventListener('submit', submitDowntime);
-  init();
+
+  (async () => {
+    await Auth.requireAdmin('index.html');
+    document.getElementById('btnLogout')?.addEventListener('click', () => Auth.logout());
+    init();
+  })();
 });

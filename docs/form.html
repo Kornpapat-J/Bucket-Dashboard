@@ -242,10 +242,19 @@
       <div class="recent-list">
         <div class="recent-list-top">
           <h3>📋 รายการที่บันทึกวันนี้</h3>
-          <div class="recent-filter-wrap dt-filter-wrap" id="recentBucketFilter">
-            <button type="button" class="dt-filter-btn active" data-bucket="all">ทั้งหมด</button>
-            <button type="button" class="dt-filter-btn bucket-filter-1" data-bucket="Bucket 1">Bucket 1</button>
-            <button type="button" class="dt-filter-btn bucket-filter-2" data-bucket="Bucket 2">Bucket 2</button>
+          <div class="recent-filter-pills bucket-pills" id="recentBucketFilter">
+            <label class="bucket-pill bucket-pill--filter">
+              <input type="radio" name="recentBucketFilter" value="all" checked>
+              <span class="bucket-pill-inner">ทั้งหมด</span>
+            </label>
+            <label class="bucket-pill bucket-pill--filter">
+              <input type="radio" name="recentBucketFilter" value="Bucket 1">
+              <span class="bucket-pill-inner"><span class="ith-ico ith-ico-bucket" aria-hidden="true"></span> Bucket 1</span>
+            </label>
+            <label class="bucket-pill bucket-pill--filter">
+              <input type="radio" name="recentBucketFilter" value="Bucket 2">
+              <span class="bucket-pill-inner"><span class="ith-ico ith-ico-bucket" aria-hidden="true"></span> Bucket 2</span>
+            </label>
           </div>
         </div>
         <h4 class="recent-section-title">Performance</h4>
@@ -262,6 +271,6 @@
   <script src="js/utils.js"></script>
   <script src="js/data-store.js"></script>
   <script src="js/auth.js"></script>
-  <script src="js/form.js"></script>
+  <script src="js/form.js?v=20260616"></script>
 </body>
 </html>
