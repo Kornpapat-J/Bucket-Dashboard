@@ -193,10 +193,17 @@ function aggregateHourly(production) {
   return map;
 }
 
-function getHourLabels() {
+function getShiftStartHour(shift) {
+  return shift === 'night' ? 20 : 8;
+}
+
+function getHourLabels(shift) {
+  const startHour = getShiftStartHour(shift === 'night' ? 'night' : 'day');
   const labels = [];
-  for (let h = 8; h <= 23; h++) labels.push(`${String(h).padStart(2, '0')}:00`);
-  for (let h = 0; h <= 7; h++) labels.push(`${String(h).padStart(2, '0')}:00`);
+  for (let i = 0; i < 24; i++) {
+    const h = (startHour + i) % 24;
+    labels.push(`${String(h).padStart(2, '0')}:00`);
+  }
   return labels;
 }
 

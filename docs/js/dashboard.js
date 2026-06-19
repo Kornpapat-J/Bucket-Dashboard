@@ -309,7 +309,7 @@ function renderBarChart() {
   const prod = getFilteredProduction();
   const buckets = state.config.buckets || [...new Set(prod.map(p => p.bucketId))];
   const hourly = aggregateHourly(prod);
-  const labels = getHourLabels();
+  const labels = getHourLabels(state.shift);
   const target = state.config.hourlyTarget || 400;
 
   const datasets = buckets.map(b => ({
@@ -481,7 +481,7 @@ function renderLineChart() {
   const prod = getFilteredProduction();
   const buckets = state.config.buckets || [...new Set(prod.map(p => p.bucketId))];
   const hourlyProd = aggregateHourlyProductivity(prod);
-  const labels = getHourLabels();
+  const labels = getHourLabels(state.shift);
 
   const datasets = buckets.map(b => ({
     label: b,

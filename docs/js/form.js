@@ -1,4 +1,4 @@
-/* global API, DataStore, showToast, formatDuration, calcDuration, toISODate, fmtNum, formatDateTH */
+/* global API, DataStore, showToast, formatDuration, calcDuration, toISODate, fmtNum, formatDateTH, parseTime, getShiftStartHour */
 
 const BUCKETS = ['Bucket 1', 'Bucket 2'];
 const LEVELS = ['b1', 'b2', 'b3'];
@@ -94,7 +94,7 @@ function getLevelDims(level) {
 function hourNoFromStartTime(startTime, shift) {
   const startMin = parseTime(startTime);
   if (startMin == null) return null;
-  const baseHour = shift === 'night' ? 20 : 8;
+  const baseHour = getShiftStartHour(shift);
   let slot = Math.floor(startMin / 60) - baseHour + 1;
   if (slot < 1) slot += 24;
   return Math.min(24, Math.max(1, slot));
