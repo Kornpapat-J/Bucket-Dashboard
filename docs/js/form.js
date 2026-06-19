@@ -386,6 +386,12 @@ function formatProdRecent(r) {
   </div>`;
 }
 
+function updateRecentTodayBtn() {
+  const btn = document.getElementById('btnRecentToday');
+  if (!btn) return;
+  btn.classList.toggle('is-active', recentDateFilter === toISODate(new Date()));
+}
+
 function updateRecentListTitle() {
   const el = document.getElementById('recentListTitle');
   if (!el) return;
@@ -446,6 +452,7 @@ function loadRecentRecords(data) {
     : `<div class="dt-empty">${empty}</div>`;
 
   updateRecentListTitle();
+  updateRecentTodayBtn();
 }
 
 function setupRecentDateFilter() {

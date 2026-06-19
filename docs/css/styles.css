@@ -803,60 +803,102 @@ body {
   position: relative;
   z-index: 2;
 }
-.recent-list h3 { font-family: "Chakra Petch", Arial, sans-serif; font-size: var(--fs-sm); color: var(--ith-gray-dark); margin-bottom: 0; }
-.recent-list-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 8px;
+.recent-list h3 {
+  font-family: "Chakra Petch", Arial, sans-serif;
+  font-size: var(--fs-sm);
+  color: var(--ith-gray-dark);
+  margin-bottom: 10px;
 }
-.recent-list-filters {
+.recent-filter-panel {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
   align-items: center;
-  justify-content: flex-end;
+  gap: 12px 18px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  background: linear-gradient(135deg, #fffaf5 0%, #ffffff 55%);
+  border: 1px solid rgba(232, 119, 34, 0.22);
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(58, 63, 68, 0.05);
 }
-.recent-date-filter {
+.recent-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.recent-filter-group-label {
+  font-family: "Chakra Petch", Arial, sans-serif;
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: var(--ith-orange-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  padding-left: 8px;
+  border-left: 3px solid var(--ith-orange);
+}
+.recent-filter-divider {
+  width: 1px;
+  height: 30px;
+  background: linear-gradient(180deg, transparent, rgba(232, 119, 34, 0.35), transparent);
+  flex-shrink: 0;
+}
+.recent-date-control {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.recent-date-label {
-  font-family: "Chakra Petch", Arial, sans-serif;
-  font-size: 0.66rem;
-  font-weight: 700;
-  color: var(--ith-gray-mid);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  gap: 4px;
+  padding: 3px 4px 3px 10px;
+  background: #fff;
+  border: 1px solid rgba(232, 119, 34, 0.28);
+  border-radius: 999px;
+  box-shadow: inset 0 1px 2px rgba(58, 63, 68, 0.04);
 }
 .recent-date-input {
   font-family: "Chakra Petch", Arial, sans-serif;
-  font-size: 0.72rem;
-  padding: 4px 8px;
-  border: 1px solid #d8dce0;
-  border-radius: 6px;
-  background: #fff;
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 5px 4px;
+  border: none;
+  background: transparent;
   color: var(--ith-gray-dark);
   min-height: 28px;
+  color-scheme: light;
+  cursor: pointer;
+}
+.recent-date-input:focus {
+  outline: none;
+}
+.recent-date-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.55;
+  filter: hue-rotate(-15deg);
 }
 .recent-today-btn {
   font-family: "Chakra Petch", Arial, sans-serif;
   font-size: 0.66rem;
-  font-weight: 600;
-  padding: 4px 10px;
+  font-weight: 700;
+  padding: 6px 12px;
   min-height: 28px;
   border-radius: 999px;
-  border: 1px solid var(--ith-orange-muted);
-  background: var(--ith-orange-pale);
-  color: var(--ith-orange-dark);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ith-gray-mid);
   cursor: pointer;
   touch-action: manipulation;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
-.recent-today-btn:hover { background: #ffe8d4; }
+.recent-today-btn:hover {
+  background: var(--ith-orange-pale);
+  color: var(--ith-orange-dark);
+}
+.recent-today-btn.is-active {
+  background: var(--ith-orange-dark);
+  border-color: var(--ith-orange-dark);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(232, 119, 34, 0.35);
+}
 .recent-filter-bar {
   display: inline-flex;
   flex-wrap: wrap;
@@ -1244,8 +1286,11 @@ body {
     margin-left: 16px;
     margin-right: 16px;
   }
-  .recent-list-filters { width: 100%; justify-content: flex-start; }
-  .recent-date-filter { width: 100%; }
+  .recent-filter-panel { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px; }
+  .recent-filter-divider { width: 100%; height: 1px; background: rgba(232, 119, 34, 0.15); }
+  .recent-filter-group { width: 100%; }
+  .recent-date-control { flex: 1; min-width: 0; }
+  .recent-date-input { flex: 1; min-width: 0; }
   .recent-item { flex-wrap: wrap; }
   .recent-item-main { flex-direction: column; align-items: flex-start; width: 100%; }
   .recent-item-actions { width: 100%; justify-content: flex-end; }
