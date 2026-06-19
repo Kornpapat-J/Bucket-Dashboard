@@ -9,7 +9,7 @@ let state = {
   config: {},
   production: [],
   downtime: [],
-  charts: { barByBucket: {} }
+  charts: { barByBucket: {}, lineByBucket: {} }
 };
 
 const REFRESH_SEC = 120;
@@ -394,6 +394,89 @@ function renderBarChart() {
   ).join('');
 }
 
+function lineBucketChartId(bucket) {
+  return 'lineBucket_' + bucket.replace(/\s+/g, '_');
+}
+
+function productivityTooltipLabel(ctx) {
+  const v = ctx.parsed.y;
+  if (v == null) return `${ctx.dataset.label}: — (ไม่มี SMU)`;
+  return `${ctx.dataset.label}: ${fmtNum(v)} BCM/SMU`;
+}
+
+function renderLineByBucketCharts(buckets, hourlyProd, labels) {
+  const wrap = document.getElementById('lineByBucketWrap');
+  const grid = document.getElementById('lineByBucketGrid');
+  if (!wrap || !grid) return;
+
+  Object.values(state.charts.lineByBucket || {}).forEach(c => c.destroy());
+  state.charts.lineByBucket = {};
+
+  const activeBuckets = buckets.filter(b =>
+    labels.some(l => {
+      const h = hourLabelToNum(l);
+      const rate = hourlyProd[h]?.[b];
+      return rate != null && rate > 0;
+    })
+  );
+
+  if (activeBuckets.length <= 1) {
+    wrap.hidden = true;
+    grid.innerHTML = '';
+    return;
+  }
+
+  wrap.hidden = false;
+  grid.innerHTML = activeBuckets.map(b => `
+    <div class="bar-bucket-mini">
+      <div class="bar-bucket-mini-head">
+        <span class="legend-dot" style="background:${getBucketColor(b, buckets)}"></span>${b}
+      </div>
+      <div class="bar-bucket-mini-wrap"><canvas id="${lineBucketChartId(b)}"></canvas></div>
+    </div>
+  `).join('');
+
+  activeBuckets.forEach(b => {
+    const ctx = document.getElementById(lineBucketChartId(b));
+    if (!ctx) return;
+    const color = getBucketColor(b, buckets);
+    const data = labels.map(l => {
+      const h = hourLabelToNum(l);
+      const rate = hourlyProd[h]?.[b];
+      return rate != null && rate > 0 ? rate : null;
+    });
+    state.charts.lineByBucket[b] = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: b,
+          data,
+          borderColor: color,
+          backgroundColor: 'transparent',
+          fill: false,
+          tension: 0.3,
+          pointRadius: 3,
+          spanGaps: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: productivityTooltipLabel } }
+        },
+        scales: {
+          x: { ticks: { font: { size: 8 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 12 } },
+          y: { beginAtZero: true, title: { display: true, text: 'BCM/SMU', font: { size: 9 } } }
+        }
+      }
+    });
+  });
+}
+
 function renderLineChart() {
   const prod = getFilteredProduction();
   const buckets = state.config.buckets || [...new Set(prod.map(p => p.bucketId))];
@@ -431,13 +514,7 @@ function renderLineChart() {
         tooltip: {
           mode: 'index',
           intersect: false,
-          callbacks: {
-            label(ctx) {
-              const v = ctx.parsed.y;
-              if (v == null) return null;
-              return `${ctx.dataset.label}: ${fmtNum(v)} BCM/SMU`;
-            }
-          }
+          callbacks: { label: productivityTooltipLabel }
         }
       },
       scales: {
@@ -456,6 +533,8 @@ function renderLineChart() {
       `<span class="legend-item"><span class="legend-dot" style="background:${getBucketColor(b, buckets)}"></span>${b}</span>`
     ).join('');
   }
+
+  renderLineByBucketCharts(buckets, hourlyProd, labels);
 }
 
 function renderPieChart() {

@@ -91,6 +91,23 @@ function getLevelDims(level) {
   };
 }
 
+function hourNoFromStartTime(startTime, shift) {
+  const startMin = parseTime(startTime);
+  if (startMin == null) return null;
+  const baseHour = shift === 'night' ? 20 : 8;
+  let slot = Math.floor(startMin / 60) - baseHour + 1;
+  if (slot < 1) slot += 24;
+  return Math.min(24, Math.max(1, slot));
+}
+
+function syncHourNoFromTime() {
+  const form = document.getElementById('formProduction');
+  const hourEl = document.getElementById('prodHour');
+  if (!form || !hourEl) return;
+  const val = hourNoFromStartTime(form.startTime.value, form.shift.value);
+  hourEl.value = val != null ? String(val) : '';
+}
+
 function updateCalculations() {
   let totalProduct = 0;
 
@@ -121,11 +138,19 @@ function updateCalculations() {
 }
 
 function setupProductionCalc() {
-  document.querySelectorAll('.perf-dim, #smuStart, #smuEnd').forEach(el => {
-    el.addEventListener('input', updateCalculations);
+  const onProdInput = () => {
+    updateCalculations();
+    syncHourNoFromTime();
+  };
+  document.querySelectorAll('.perf-dim, #smuStart, #smuEnd, #prodStart, #prodShift').forEach(el => {
+    el.addEventListener('input', onProdInput);
+    el.addEventListener('change', onProdInput);
   });
   document.getElementById('formProduction')?.addEventListener('reset', () => {
-    setTimeout(updateCalculations, 0);
+    setTimeout(() => {
+      updateCalculations();
+      syncHourNoFromTime();
+    }, 0);
   });
 }
 
@@ -148,7 +173,8 @@ function buildPerfNote(form) {
   const productionRate = smuTotal > 0 ? Math.round((totalProduct / smuTotal) * 100) / 100 : 0;
 
   return JSON.stringify({
-    hourNo: parseInt(form.hourNo.value, 10),
+    hourNo: hourNoFromStartTime(form.startTime.value, form.shift.value)
+      ?? (parseInt(form.hourNo.value, 10) || null),
     levels,
     smuStart,
     smuEnd,
@@ -204,14 +230,16 @@ async function submitProduction(e) {
     showToast('กรุณากรอก Operator และผู้บันทึก', true);
     return;
   }
-  if (!form.hourNo.value) {
-    showToast('กรุณากรอก Hr. ที่', true);
-    return;
-  }
   if (totalProduct <= 0) {
     showToast('กรุณากรอกขนาด B1/B2/B3 อย่างน้อย 1 ช่อง', true);
     return;
   }
+  if (!form.startTime.value || !form.endTime.value) {
+    showToast('กรุณากรอกเวลาเริ่มและเวลาจบ', true);
+    return;
+  }
+
+  syncHourNoFromTime();
 
   try {
     if (editingProductionId) {
@@ -349,6 +377,7 @@ function fillProductionForm(record) {
   form.endTime.value = record.endTime || '';
   form.operatorName.value = record.operatorName || '';
   form.recordedBy.value = record.location || '';
+  syncHourNoFromTime();
   updateCalculations();
 }
 
@@ -375,7 +404,9 @@ function recentActionsHtml(id, kind, canMutate) {
 
 function formatProdRecent(r) {
   const meta = parsePerfNote(r.note);
-  const hour = meta?.hourNo ? `Hr.${meta.hourNo}` : `${r.startTime}-${r.endTime}`;
+  const hour = (r.startTime && r.endTime)
+    ? `${r.startTime.slice(0, 5)}-${r.endTime.slice(0, 5)}`
+    : (meta?.hourNo ? `Hr.${meta.hourNo}` : '—');
   const canMutate = DataStore.canMutateRecord(r.id, 'production');
   return `<div class="recent-item">
     <div class="recent-item-main">
@@ -604,6 +635,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupTabs();
   setupOngoingToggle();
   setupProductionCalc();
+  syncHourNoFromTime();
   setupRecentActions();
   setupRecentDateFilter();
   setupRecentBucketFilter();

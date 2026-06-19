@@ -74,41 +74,55 @@ function parseRecordHourNo(note) {
 }
 
 function getRecordHourSegments(record) {
-  const hourNo = parseRecordHourNo(record.note);
-  if (hourNo != null) {
-    return [{ hour: (8 + hourNo - 1) % 24, fraction: 1 }];
-  }
-
   const start = parseTime(record.startTime);
   const end = parseTime(record.endTime);
-  if (start == null || end == null || end <= start) {
-    const hour = start != null ? Math.floor(start / 60) : 8;
-    return [{ hour, fraction: 1 }];
+
+  if (start != null && end != null && end > start) {
+    const totalMin = end - start;
+    const hours = [];
+    let cursor = start;
+    while (cursor < end) {
+      const hour = Math.floor(cursor / 60);
+      const hourEnd = (hour + 1) * 60;
+      const segEnd = Math.min(end, hourEnd);
+      const segMin = segEnd - cursor;
+      hours.push({ hour, fraction: segMin / totalMin });
+      cursor = segEnd;
+    }
+    return hours;
   }
-  const totalMin = end - start;
-  const hours = [];
-  let cursor = start;
-  while (cursor < end) {
-    const hour = Math.floor(cursor / 60);
-    const hourEnd = (hour + 1) * 60;
-    const segEnd = Math.min(end, hourEnd);
-    const segMin = segEnd - cursor;
-    hours.push({ hour, fraction: segMin / totalMin });
-    cursor = segEnd;
+
+  if (start != null) {
+    return [{ hour: Math.floor(start / 60), fraction: 1 }];
   }
-  return hours;
+
+  return [];
 }
 
 function getRecordSmuTotal(record) {
+  let meta = null;
   try {
-    const meta = record.note ? JSON.parse(record.note) : null;
-    if (meta?.smuTotal > 0) return meta.smuTotal;
+    meta = record.note ? JSON.parse(record.note) : null;
   } catch { /* ignore */ }
+
+  if (meta?.smuTotal > 0) return meta.smuTotal;
+
+  const smuStart = parseFloat(meta?.smuStart);
+  const smuEnd = parseFloat(meta?.smuEnd);
+  if (!isNaN(smuStart) && !isNaN(smuEnd) && smuEnd > smuStart) {
+    return Math.round((smuEnd - smuStart) * 100) / 100;
+  }
+
+  if (meta?.productionRate > 0 && record.volumeBCM > 0) {
+    return Math.round((record.volumeBCM / meta.productionRate) * 100) / 100;
+  }
+
   const start = parseTime(record.startTime);
   const end = parseTime(record.endTime);
   if (start != null && end != null && end > start) {
     return Math.round(((end - start) / 60) * 100) / 100;
   }
+
   return 0;
 }
 
