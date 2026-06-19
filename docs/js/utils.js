@@ -195,8 +195,7 @@ function aggregateHourly(production) {
 
 function getHourLabels() {
   const labels = [];
-  for (let h = 8; h <= 23; h++) labels.push(`${String(h).padStart(2, '0')}:00`);
-  for (let h = 0; h <= 7; h++) labels.push(`${String(h).padStart(2, '0')}:00`);
+  for (let h = 0; h <= 23; h++) labels.push(`${String(h).padStart(2, '0')}:00`);
   return labels;
 }
 
