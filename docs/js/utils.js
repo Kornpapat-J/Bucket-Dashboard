@@ -73,18 +73,17 @@ function parseRecordHourNo(note) {
   }
 }
 
-function distributeHourlyVolume(record) {
+function getRecordHourSegments(record) {
   const hourNo = parseRecordHourNo(record.note);
   if (hourNo != null) {
-    const clockHour = (8 + hourNo - 1) % 24;
-    return [{ hour: clockHour, volume: record.volumeBCM }];
+    return [{ hour: (8 + hourNo - 1) % 24, fraction: 1 }];
   }
 
   const start = parseTime(record.startTime);
   const end = parseTime(record.endTime);
   if (start == null || end == null || end <= start) {
     const hour = start != null ? Math.floor(start / 60) : 8;
-    return [{ hour, volume: record.volumeBCM }];
+    return [{ hour, fraction: 1 }];
   }
   const totalMin = end - start;
   const hours = [];
@@ -97,16 +96,76 @@ function distributeHourlyVolume(record) {
     hours.push({ hour, fraction: segMin / totalMin });
     cursor = segEnd;
   }
+  return hours;
+}
+
+function getRecordSmuTotal(record) {
+  try {
+    const meta = record.note ? JSON.parse(record.note) : null;
+    if (meta?.smuTotal > 0) return meta.smuTotal;
+  } catch { /* ignore */ }
+  const start = parseTime(record.startTime);
+  const end = parseTime(record.endTime);
+  if (start != null && end != null && end > start) {
+    return Math.round(((end - start) / 60) * 100) / 100;
+  }
+  return 0;
+}
+
+function distributeHourlyVolume(record) {
+  const segments = getRecordHourSegments(record);
   let allocated = 0;
-  return hours.map((h, i) => {
+  return segments.map((seg, i) => {
     let vol;
-    if (i === hours.length - 1) vol = record.volumeBCM - allocated;
+    if (i === segments.length - 1) vol = record.volumeBCM - allocated;
     else {
-      vol = Math.round(record.volumeBCM * h.fraction);
+      vol = Math.round(record.volumeBCM * seg.fraction);
       allocated += vol;
     }
-    return { hour: h.hour, volume: vol };
+    return { hour: seg.hour, volume: vol };
   });
+}
+
+function distributeHourlyMetrics(record) {
+  const bcm = record.volumeBCM || 0;
+  const smuTotal = getRecordSmuTotal(record);
+  const segments = getRecordHourSegments(record);
+  let allocatedBcm = 0;
+  let allocatedSmu = 0;
+  return segments.map((seg, i) => {
+    let segBcm;
+    let segSmu;
+    if (i === segments.length - 1) {
+      segBcm = bcm - allocatedBcm;
+      segSmu = Math.round((smuTotal - allocatedSmu) * 100) / 100;
+    } else {
+      segBcm = Math.round(bcm * seg.fraction);
+      segSmu = Math.round(smuTotal * seg.fraction * 100) / 100;
+      allocatedBcm += segBcm;
+      allocatedSmu += segSmu;
+    }
+    return { hour: seg.hour, bcm: segBcm, smu: segSmu };
+  });
+}
+
+function aggregateHourlyProductivity(production) {
+  const map = {};
+  production.forEach(r => {
+    distributeHourlyMetrics(r).forEach(({ hour, bcm, smu }) => {
+      if (!map[hour]) map[hour] = {};
+      if (!map[hour][r.bucketId]) map[hour][r.bucketId] = { bcm: 0, smu: 0 };
+      map[hour][r.bucketId].bcm += bcm;
+      map[hour][r.bucketId].smu += smu;
+    });
+  });
+  const rates = {};
+  Object.entries(map).forEach(([hour, buckets]) => {
+    rates[hour] = {};
+    Object.entries(buckets).forEach(([bucket, { bcm, smu }]) => {
+      if (smu > 0) rates[hour][bucket] = Math.round((bcm / smu) * 100) / 100;
+    });
+  });
+  return rates;
 }
 
 function aggregateHourly(production) {

@@ -1,5 +1,5 @@
 /* global Chart, API, DataStore, Auth, showToast, formatDateTH, toISODate, calcDuration, formatDuration, filterByShift,
-   aggregateHourly, getHourLabels, hourLabelToNum, calcWorkingHours, sumByBucket,
+   aggregateHourly, aggregateHourlyProductivity, getHourLabels, hourLabelToNum, calcWorkingHours, sumByBucket,
    sumDowntimeByBucket, sumDowntimeByType, getBucketColor, fmtNum, DT_TYPES */
 
 let state = {
@@ -396,41 +396,66 @@ function renderBarChart() {
 
 function renderLineChart() {
   const prod = getFilteredProduction();
-  const hourly = aggregateHourly(prod);
+  const buckets = state.config.buckets || [...new Set(prod.map(p => p.bucketId))];
+  const hourlyProd = aggregateHourlyProductivity(prod);
   const labels = getHourLabels();
-  const data = labels.map(l => {
-    const h = hourLabelToNum(l);
-    if (!hourly[h]) return 0;
-    return Object.values(hourly[h]).reduce((s, v) => s + v, 0);
-  });
+
+  const datasets = buckets.map(b => ({
+    label: b,
+    data: labels.map(l => {
+      const h = hourLabelToNum(l);
+      const rate = hourlyProd[h]?.[b];
+      return rate != null && rate > 0 ? rate : null;
+    }),
+    borderColor: getBucketColor(b, buckets),
+    backgroundColor: 'transparent',
+    fill: false,
+    tension: 0.3,
+    pointRadius: 3,
+    pointHoverRadius: 5,
+    spanGaps: false
+  }));
 
   const ctx = document.getElementById('lineChart');
   if (state.charts.line) state.charts.line.destroy();
 
   state.charts.line = new Chart(ctx, {
     type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Total BCM/Hr',
-        data,
-        borderColor: '#e8873a',
-        backgroundColor: 'rgba(232, 135, 58, 0.1)',
-        fill: true,
-        tension: 0.3,
-        pointRadius: 2
-      }]
-    },
+    data: { labels, datasets },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          callbacks: {
+            label(ctx) {
+              const v = ctx.parsed.y;
+              if (v == null) return null;
+              return `${ctx.dataset.label}: ${fmtNum(v)} BCM/SMU`;
+            }
+          }
+        }
+      },
       scales: {
         x: { ticks: { font: { size: 9 }, maxRotation: 45 } },
-        y: { beginAtZero: true }
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: 'BCM/SMU', font: { size: 10 } }
+        }
       }
     }
   });
+
+  const legend = document.getElementById('lineLegend');
+  if (legend) {
+    legend.innerHTML = buckets.map(b =>
+      `<span class="legend-item"><span class="legend-dot" style="background:${getBucketColor(b, buckets)}"></span>${b}</span>`
+    ).join('');
+  }
 }
 
 function renderPieChart() {
