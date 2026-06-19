@@ -242,17 +242,32 @@
       <div class="recent-list">
         <h3 id="recentListTitle">📋 รายการที่บันทึกวันนี้</h3>
         <div class="recent-filter-panel">
-          <div class="recent-filter-group">
-            <span class="recent-filter-group-label">วันที่</span>
-            <div class="recent-date-control">
-              <input type="date" id="recentDateFilter" class="recent-date-input" aria-label="เลือกวันที่">
+          <div class="filter-block filter-block--date">
+            <div class="filter-block-head">
+              <span class="filter-block-icon filter-block-icon--date" aria-hidden="true"></span>
+              <div class="filter-block-meta">
+                <span class="filter-block-title">วันที่</span>
+                <span class="filter-block-hint">เลือกวันเพื่อดูรายการ</span>
+              </div>
+            </div>
+            <div class="filter-block-actions">
+              <label class="recent-date-field">
+                <input type="date" id="recentDateFilter" class="recent-date-input" aria-label="เลือกวันที่">
+              </label>
               <button type="button" class="recent-today-btn is-active" id="btnRecentToday">วันนี้</button>
             </div>
           </div>
-          <div class="recent-filter-divider" aria-hidden="true"></div>
-          <div class="recent-filter-group">
-            <span class="recent-filter-group-label">Bucket</span>
-            <div class="recent-filter-bar" id="recentBucketFilter">
+          <div class="filter-block filter-block--bucket">
+            <div class="filter-block-head">
+              <span class="filter-block-icon filter-block-icon--bucket" aria-hidden="true">
+                <span class="ith-ico ith-ico-bucket"></span>
+              </span>
+              <div class="filter-block-meta">
+                <span class="filter-block-title">Bucket</span>
+                <span class="filter-block-hint">กรองตาม Bucket</span>
+              </div>
+            </div>
+            <div class="recent-filter-bar recent-segment" id="recentBucketFilter">
               <label class="recent-filter-chip">
                 <input type="radio" name="recentBucketFilter" value="all" checked>
                 <span>ทั้งหมด</span>
@@ -282,6 +297,6 @@
   <script src="js/utils.js"></script>
   <script src="js/data-store.js"></script>
   <script src="js/auth.js"></script>
-  <script src="js/form.js?v=20260619"></script>
+  <script src="js/form.js?v=20260619b"></script>
 </body>
 </html>
