@@ -1,4 +1,4 @@
-/* global API, DataStore, showToast, formatDuration, calcDuration, toISODate, fmtNum */
+/* global API, DataStore, showToast, formatDuration, calcDuration, toISODate, fmtNum, formatDateTH */
 
 const BUCKETS = ['Bucket 1', 'Bucket 2'];
 const LEVELS = ['b1', 'b2', 'b3'];
@@ -8,6 +8,7 @@ let activeTab = 'production';
 let editingProductionId = null;
 let editingDowntimeId = null;
 let recentBucketFilter = 'all';
+let recentDateFilter = toISODate(new Date());
 let cachedData = { production: [], downtime: [] };
 
 async function init() {
@@ -19,6 +20,9 @@ async function init() {
     cachedData = data;
     document.getElementById('prodDate').value = toISODate(new Date());
     document.getElementById('dtDate').value = toISODate(new Date());
+    recentDateFilter = toISODate(new Date());
+    const recentDateInput = document.getElementById('recentDateFilter');
+    if (recentDateInput) recentDateInput.value = recentDateFilter;
     loadRecentRecords(data);
     updateLocalCount();
     updateCalculations();
@@ -382,25 +386,43 @@ function formatProdRecent(r) {
   </div>`;
 }
 
+function updateRecentListTitle() {
+  const el = document.getElementById('recentListTitle');
+  if (!el) return;
+  const today = toISODate(new Date());
+  el.textContent = recentDateFilter === today
+    ? '📋 รายการที่บันทึกวันนี้'
+    : `📋 รายการวันที่ ${formatDateTH(recentDateFilter)}`;
+}
+
+function recentDayLabel() {
+  const today = toISODate(new Date());
+  return recentDateFilter === today ? 'วันนี้' : formatDateTH(recentDateFilter);
+}
+
 function matchesRecentBucket(record) {
   if (recentBucketFilter === 'all') return true;
   return record.bucketId === recentBucketFilter;
 }
 
 function recentEmptyMessage() {
-  if (recentBucketFilter === 'all') return 'ยังไม่มีรายการวันนี้';
-  return `ไม่มีรายการ ${recentBucketFilter} วันนี้`;
+  const day = recentDayLabel();
+  if (recentBucketFilter === 'all') {
+    return day === 'วันนี้' ? 'ยังไม่มีรายการวันนี้' : `ยังไม่มีรายการวันที่ ${day}`;
+  }
+  return day === 'วันนี้'
+    ? `ไม่มีรายการ ${recentBucketFilter} วันนี้`
+    : `ไม่มีรายการ ${recentBucketFilter} วันที่ ${day}`;
 }
 
 function loadRecentRecords(data) {
   cachedData = data;
-  const today = toISODate(new Date());
   const recentProd = data.production
-    .filter(r => r.date === today && matchesRecentBucket(r))
+    .filter(r => r.date === recentDateFilter && matchesRecentBucket(r))
     .slice()
     .reverse();
   const recentDt = data.downtime
-    .filter(r => r.date === today && matchesRecentBucket(r))
+    .filter(r => r.date === recentDateFilter && matchesRecentBucket(r))
     .slice()
     .reverse();
 
@@ -422,6 +444,25 @@ function loadRecentRecords(data) {
         </div>`;
       }).join('')
     : `<div class="dt-empty">${empty}</div>`;
+
+  updateRecentListTitle();
+}
+
+function setupRecentDateFilter() {
+  const input = document.getElementById('recentDateFilter');
+  const btnToday = document.getElementById('btnRecentToday');
+  if (input) {
+    input.value = recentDateFilter;
+    input.addEventListener('change', () => {
+      recentDateFilter = input.value || toISODate(new Date());
+      loadRecentRecords(cachedData);
+    });
+  }
+  btnToday?.addEventListener('click', () => {
+    recentDateFilter = toISODate(new Date());
+    if (input) input.value = recentDateFilter;
+    loadRecentRecords(cachedData);
+  });
 }
 
 function setupRecentBucketFilter() {
@@ -557,6 +598,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupOngoingToggle();
   setupProductionCalc();
   setupRecentActions();
+  setupRecentDateFilter();
   setupRecentBucketFilter();
   setupEditCancel();
   document.getElementById('formProduction').addEventListener('submit', submitProduction);

@@ -241,8 +241,14 @@
 
       <div class="recent-list">
         <div class="recent-list-top">
-          <h3>📋 รายการที่บันทึกวันนี้</h3>
-          <div class="recent-filter-bar" id="recentBucketFilter">
+          <h3 id="recentListTitle">📋 รายการที่บันทึกวันนี้</h3>
+          <div class="recent-list-filters">
+            <div class="recent-date-filter">
+              <label for="recentDateFilter" class="recent-date-label">วันที่</label>
+              <input type="date" id="recentDateFilter" class="recent-date-input">
+              <button type="button" class="recent-today-btn" id="btnRecentToday">วันนี้</button>
+            </div>
+            <div class="recent-filter-bar" id="recentBucketFilter">
             <label class="recent-filter-chip">
               <input type="radio" name="recentBucketFilter" value="all" checked>
               <span>ทั้งหมด</span>
@@ -255,6 +261,7 @@
               <input type="radio" name="recentBucketFilter" value="Bucket 2">
               <span>Bucket 2</span>
             </label>
+          </div>
           </div>
         </div>
         <h4 class="recent-section-title">Performance</h4>
@@ -271,6 +278,6 @@
   <script src="js/utils.js"></script>
   <script src="js/data-store.js"></script>
   <script src="js/auth.js"></script>
-  <script src="js/form.js?v=20260617"></script>
+  <script src="js/form.js?v=20260618"></script>
 </body>
 </html>

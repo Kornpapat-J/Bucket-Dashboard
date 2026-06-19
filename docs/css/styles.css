@@ -806,12 +806,57 @@ body {
 .recent-list h3 { font-family: "Chakra Petch", Arial, sans-serif; font-size: var(--fs-sm); color: var(--ith-gray-dark); margin-bottom: 0; }
 .recent-list-top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
   margin-bottom: 8px;
 }
+.recent-list-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+}
+.recent-date-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.recent-date-label {
+  font-family: "Chakra Petch", Arial, sans-serif;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--ith-gray-mid);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.recent-date-input {
+  font-family: "Chakra Petch", Arial, sans-serif;
+  font-size: 0.72rem;
+  padding: 4px 8px;
+  border: 1px solid #d8dce0;
+  border-radius: 6px;
+  background: #fff;
+  color: var(--ith-gray-dark);
+  min-height: 28px;
+}
+.recent-today-btn {
+  font-family: "Chakra Petch", Arial, sans-serif;
+  font-size: 0.66rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  min-height: 28px;
+  border-radius: 999px;
+  border: 1px solid var(--ith-orange-muted);
+  background: var(--ith-orange-pale);
+  color: var(--ith-orange-dark);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.recent-today-btn:hover { background: #ffe8d4; }
 .recent-filter-bar {
   display: inline-flex;
   flex-wrap: wrap;
@@ -1199,6 +1244,8 @@ body {
     margin-left: 16px;
     margin-right: 16px;
   }
+  .recent-list-filters { width: 100%; justify-content: flex-start; }
+  .recent-date-filter { width: 100%; }
   .recent-item { flex-wrap: wrap; }
   .recent-item-main { flex-direction: column; align-items: flex-start; width: 100%; }
   .recent-item-actions { width: 100%; justify-content: flex-end; }
