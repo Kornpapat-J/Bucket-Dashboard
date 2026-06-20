@@ -151,9 +151,13 @@ function setupTime24Pickers() {
   document.querySelectorAll('.time-24h-picker').forEach(picker => {
     const hourSel = picker.querySelector('.time-24h-hour');
     const minSel = picker.querySelector('.time-24h-min');
-    if (!hourSel || !minSel || hourSel.options.length > 1) return;
-    fillTime24Select(hourSel, 23);
-    fillTime24Select(minSel, 59);
+    if (!hourSel || !minSel) return;
+    if (hourSel.options.length <= 1) {
+      fillTime24Select(hourSel, 23);
+      fillTime24Select(minSel, 59);
+    }
+    if (picker.dataset.time24Ready) return;
+    picker.dataset.time24Ready = '1';
     const onChange = () => syncTime24Picker(picker);
     hourSel.addEventListener('change', onChange);
     minSel.addEventListener('change', onChange);
