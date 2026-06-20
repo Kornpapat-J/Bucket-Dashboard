@@ -1,6 +1,7 @@
 /* global Chart, API, DataStore, Auth, showToast, formatDateTH, toISODate, calcDuration, formatDuration, filterByShift,
    aggregateHourly, aggregateHourlyProductivity, getHourLabels, hourLabelToNum, calcWorkingHours, sumByBucket,
-   sumDowntimeByBucket, sumDowntimeByType, getBucketColor, fmtNum, DT_TYPES, sumProductionByCutType, getCutTargets, sumVolumeByBucketAndCutType */
+   sumDowntimeByBucket, sumDowntimeByType, getBucketColor, fmtNum, DT_TYPES, sumProductionByCutType, getCutTargets, sumVolumeByBucketAndCutType,
+   getCutTargetsForShift, getShiftTargetLabel, canEditShiftTarget */
 
 let state = {
   date: toISODate(new Date()),
@@ -51,24 +52,42 @@ function renderAll() {
   updateTargetDisplay();
 }
 
+function getActiveCutTargets() {
+  return getCutTargetsForShift(state.config.targetsByShift || {}, state.shift, state.config);
+}
+
 function updateTargetDisplay() {
-  const cuts = getCutTargets(state.config);
+  const cuts = getActiveCutTargets();
   const highEl = document.getElementById('highCutTargetView');
   const dropEl = document.getElementById('dropCutTargetView');
   const dateEl = document.getElementById('targetDateView');
+  const hint = document.getElementById('targetHint');
+  const card = document.getElementById('targetCard');
   if (highEl) highEl.textContent = fmtNum(cuts.highCutTarget);
   if (dropEl) dropEl.textContent = fmtNum(cuts.dropCutTarget);
-  if (dateEl) dateEl.textContent = formatDateTH(state.date);
+  if (dateEl) dateEl.textContent = getShiftTargetLabel(state.shift);
+  if (hint) {
+    hint.textContent = canEditShiftTarget(state.shift)
+      ? 'คลิกเพื่อแก้ไข Target ต่อ Shift line'
+      : 'เลือก Shift Day หรือ Night เพื่อแก้ไข Target';
+  }
+  if (card) {
+    card.classList.toggle('target-panel--editable', Auth.isAdmin() && canEditShiftTarget(state.shift));
+  }
 }
 
 function openTargetEditor() {
   if (!Auth.isAdmin()) return;
-  const cuts = getCutTargets(state.config);
+  if (!canEditShiftTarget(state.shift)) {
+    showToast('เลือก Shift Day หรือ Night ก่อนแก้ไข Target', true);
+    return;
+  }
+  const cuts = getActiveCutTargets();
   document.getElementById('targetView').hidden = true;
   document.getElementById('targetEditor').hidden = false;
   const hint = document.getElementById('targetHint');
   if (hint) hint.hidden = true;
-  document.getElementById('targetDateLabel').textContent = formatDateTH(state.date);
+  document.getElementById('targetDateLabel').textContent = getShiftTargetLabel(state.shift);
   document.getElementById('inputHighCutTarget').value = cuts.highCutTarget;
   document.getElementById('inputDropCutTarget').value = cuts.dropCutTarget;
   document.getElementById('inputHighCutTarget').focus();
@@ -85,18 +104,17 @@ async function saveTargetEditor() {
   const high = parseFloat(document.getElementById('inputHighCutTarget').value);
   const drop = parseFloat(document.getElementById('inputDropCutTarget').value);
   if (!high || high <= 0) {
-    showToast('กรุณากรอกเป้า High Cut BCM/วัน', true);
+    showToast('กรุณากรอกเป้า High Cut BCM/Shift', true);
     return;
   }
   if (!drop || drop <= 0) {
-    showToast('กรุณากรอกเป้า Drop Cut BCM/วัน', true);
+    showToast('กรุณากรอกเป้า Drop Cut BCM/Shift', true);
     return;
   }
   try {
-    const saved = await DataStore.saveTargets(state.date, high, drop);
-    state.config.highCutTarget = saved.highCutTarget;
-    state.config.dropCutTarget = saved.dropCutTarget;
-    state.config.dailyTarget = saved.dailyTarget;
+    const saved = await DataStore.saveTargets(state.date, state.shift, high, drop);
+    if (!state.config.targetsByShift) state.config.targetsByShift = { day: {}, night: {} };
+    state.config.targetsByShift[state.shift] = saved;
     closeTargetEditor();
     renderBarChart();
     renderPieChart();
@@ -116,10 +134,10 @@ function setupTargetEditor() {
     hint?.remove();
     return;
   }
-  card?.classList.add('target-panel--editable');
+  card?.classList.remove('target-panel--editable');
   if (hint) {
     hint.hidden = false;
-    hint.textContent = 'คลิกเพื่อแก้ไข Target';
+    hint.textContent = 'คลิกเพื่อแก้ไข Target ต่อ Shift line';
   }
   btnEdit?.addEventListener('click', (e) => { e.stopPropagation(); openTargetEditor(); });
   card?.addEventListener('click', () => {
@@ -467,7 +485,7 @@ function renderPieChart() {
   const total = values.reduce((s, v) => s + v, 0);
   const workHrs = calcWorkingHours(prod);
   const productivity = workHrs > 0 ? Math.round(total / workHrs) : 0;
-  const cuts = getCutTargets(state.config);
+  const cuts = getActiveCutTargets();
   const byCut = sumProductionByCutType(prod);
   const totalTarget = cuts.highCutTarget + cuts.dropCutTarget;
 

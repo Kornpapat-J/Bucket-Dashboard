@@ -357,7 +357,7 @@ body {
   grid-template-columns: 88px minmax(0, 1fr);
   grid-template-rows: auto auto;
   gap: 6px 8px;
-  align-items: start;
+  align-items: stretch;
   padding: 10px 10px 6px;
 }
 .pie-legend {
@@ -372,6 +372,8 @@ body {
   height: 88px;
   grid-column: 1;
   grid-row: 2;
+  align-self: center;
+  justify-self: center;
   flex-shrink: 0;
   position: relative;
   border-radius: 50%;
@@ -379,7 +381,7 @@ body {
   box-shadow: inset 0 0 0 3px rgba(232, 119, 34, 0.2), 0 2px 8px rgba(232, 119, 34, 0.12);
 }
 .pie-wrap canvas { position: absolute; top: 0; left: 0; width: 100% !important; height: 100% !important; }
-.pie-right { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; gap: 4px; min-width: 0; width: 100%; }
+.pie-right { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; gap: 4px; min-width: 0; width: 100%; align-self: stretch; justify-content: center; }
 .pie-legend-item { display: flex; flex-direction: column; gap: 2px; font-size: 0.8rem; font-weight: 700; padding: 6px 8px; border-radius: 5px; background: rgba(255,255,255,0.7); width: 100%; box-sizing: border-box; }
 .pie-legend-main { display: flex; align-items: center; justify-content: space-between; }
 .pie-legend-coils {
@@ -461,6 +463,18 @@ body {
   font-size: 0.68rem;
   color: var(--muted);
   flex: 1;
+  text-align: center;
+}
+.target-shift-note {
+  margin: 0 10px 6px;
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: var(--ith-gray);
+  font-style: italic;
+}
+.target-shift-note--view {
+  margin: 4px 10px 0;
+  text-align: center;
 }
 .target-panel-metrics {
   display: grid;
