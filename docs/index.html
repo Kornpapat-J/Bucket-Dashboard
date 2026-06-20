@@ -6,7 +6,7 @@
   <title>Bucket Excavation Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/styles.css?v=20260621a">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -125,10 +125,14 @@
                     <span class="target-panel-date" id="targetDateView"></span>
                     <button type="button" class="target-edit-btn" id="btnEditTarget" title="แก้ไข Target">✎</button>
                   </div>
-                  <div class="target-panel-metrics">
+                  <div class="target-panel-metrics target-panel-metrics--cuts">
                     <div class="target-metric">
-                      <span class="target-metric-label">BCM/Day</span>
-                      <span class="target-metric-val" id="dailyTarget">5,000</span>
+                      <span class="target-metric-label">High Cut</span>
+                      <span class="target-metric-val" id="highCutTargetView">2,500</span>
+                    </div>
+                    <div class="target-metric">
+                      <span class="target-metric-label">Drop Cut</span>
+                      <span class="target-metric-val" id="dropCutTargetView">2,500</span>
                     </div>
                     <div class="target-metric">
                       <span class="target-metric-label">BCM/Hr</span>
@@ -141,10 +145,14 @@
                     <span class="target-panel-tag">Target</span>
                     <span class="target-panel-date" id="targetDateLabel"></span>
                   </div>
-                  <div class="target-editor-fields">
+                  <div class="target-editor-fields target-editor-fields--cuts">
                     <label class="target-field">
-                      <span>BCM/Day</span>
-                      <input type="number" id="inputDailyTarget" min="0" step="100" placeholder="5000">
+                      <span>High Cut BCM/Day</span>
+                      <input type="number" id="inputHighCutTarget" min="0" step="100" placeholder="2500">
+                    </label>
+                    <label class="target-field">
+                      <span>Drop Cut BCM/Day</span>
+                      <input type="number" id="inputDropCutTarget" min="0" step="100" placeholder="2500">
                     </label>
                     <label class="target-field">
                       <span>BCM/Hr</span>
@@ -173,7 +181,19 @@
                 <div class="donut-title">Target Achievement</div>
                 <div class="donut-stat"><span class="donut-stat-label">Actual</span><span class="donut-stat-val" id="donutActual">—</span></div>
                 <div class="donut-stat"><span class="donut-stat-label">Target</span><span class="donut-stat-val orange" id="donutTarget">—</span></div>
-                <div class="donut-stat"><span class="donut-stat-label">Remaining</span><span class="donut-stat-val red" id="donutGap">—</span></div>
+                <div class="donut-stat donut-stat--remaining">
+                  <span class="donut-stat-label">Remaining</span>
+                  <div class="donut-remaining-split">
+                    <div class="donut-remaining-row">
+                      <span class="donut-remaining-type">High Cut</span>
+                      <span class="donut-stat-val" id="donutGapHigh">—</span>
+                    </div>
+                    <div class="donut-remaining-row">
+                      <span class="donut-remaining-type">Drop Cut</span>
+                      <span class="donut-stat-val" id="donutGapDrop">—</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -217,9 +237,9 @@
   <script src="js/supabase-config.js"></script>
   <script src="js/auth-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/utils.js?v=20260619a"></script>
+  <script src="js/utils.js?v=20260621a"></script>
   <script src="js/data-store.js"></script>
   <script src="js/auth.js"></script>
-  <script src="js/dashboard.js?v=20260619b"></script>
+  <script src="js/dashboard.js?v=20260621a"></script>
 </body>
 </html>

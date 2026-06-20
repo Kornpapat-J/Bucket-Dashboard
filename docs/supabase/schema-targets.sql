@@ -5,8 +5,13 @@ create table if not exists daily_targets (
   date date primary key,
   daily_target numeric not null default 5000,
   hourly_target numeric not null default 400,
+  high_cut_target numeric,
+  drop_cut_target numeric,
   updated_at timestamptz default now()
 );
+
+alter table daily_targets add column if not exists high_cut_target numeric;
+alter table daily_targets add column if not exists drop_cut_target numeric;
 
 alter table daily_targets enable row level security;
 

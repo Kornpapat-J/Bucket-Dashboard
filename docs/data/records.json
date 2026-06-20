@@ -1,6 +1,8 @@
 {
   "config": {
     "dailyTarget": 5000,
+    "highCutTarget": 2500,
+    "dropCutTarget": 2500,
     "hourlyTarget": 400,
     "buckets": ["Bucket 1", "Bucket 2"]
   },

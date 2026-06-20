@@ -1,4 +1,4 @@
-/* global SUPABASE_CONFIG, genId, getDataUrl */
+/* global SUPABASE_CONFIG, genId, getDataUrl, getCutTargets */
 
 const LOCAL_KEY = 'bucket_dashboard_local';
 const TARGETS_LOCAL_KEY = 'bucket_daily_targets';
@@ -188,44 +188,81 @@ const DataStore = {
   async getByDate(date) {
     const all = await this.getData();
     const targets = await this.getTargets(date, all.config || {});
+    const cutTargets = getCutTargets({ ...all.config, ...targets });
     return {
-      config: { ...all.config, dailyTarget: targets.dailyTarget, hourlyTarget: targets.hourlyTarget },
+      config: {
+        ...all.config,
+        ...targets,
+        ...cutTargets,
+        dailyTarget: cutTargets.highCutTarget + cutTargets.dropCutTarget
+      },
       production: all.production.filter(r => r.date === date),
       downtime: all.downtime.filter(r => r.date === date)
     };
   },
 
   async getTargets(date, defaultCfg = {}) {
+    const cutDefaults = getCutTargets(defaultCfg);
     const fallback = {
-      dailyTarget: Number(defaultCfg.dailyTarget) || 5000,
+      highCutTarget: cutDefaults.highCutTarget,
+      dropCutTarget: cutDefaults.dropCutTarget,
+      dailyTarget: cutDefaults.highCutTarget + cutDefaults.dropCutTarget,
       hourlyTarget: Number(defaultCfg.hourlyTarget) || 400
     };
     if (this.isCloud() && this._client) {
       try {
         const { data, error } = await this._client
           .from('daily_targets')
-          .select('daily_target, hourly_target')
+          .select('daily_target, hourly_target, high_cut_target, drop_cut_target')
           .eq('date', date)
           .maybeSingle();
         if (!error && data) {
+          const high = Number(data.high_cut_target);
+          const drop = Number(data.drop_cut_target);
+          if (high > 0 || drop > 0) {
+            return {
+              highCutTarget: high > 0 ? high : 0,
+              dropCutTarget: drop > 0 ? drop : 0,
+              dailyTarget: (high > 0 ? high : 0) + (drop > 0 ? drop : 0),
+              hourlyTarget: Number(data.hourly_target) || fallback.hourlyTarget
+            };
+          }
+          const daily = Number(data.daily_target) || fallback.dailyTarget;
+          const half = Math.round(daily / 2);
           return {
-            dailyTarget: Number(data.daily_target),
-            hourlyTarget: Number(data.hourly_target)
+            highCutTarget: half,
+            dropCutTarget: daily - half,
+            dailyTarget: daily,
+            hourlyTarget: Number(data.hourly_target) || fallback.hourlyTarget
           };
         }
       } catch { /* table อาจยังไม่ได้สร้าง */ }
     }
     try {
       const all = JSON.parse(localStorage.getItem(TARGETS_LOCAL_KEY) || '{}');
-      if (all[date]) return all[date];
+      if (all[date]) {
+        const stored = all[date];
+        const cut = getCutTargets(stored);
+        return {
+          ...stored,
+          ...cut,
+          dailyTarget: cut.highCutTarget + cut.dropCutTarget,
+          hourlyTarget: Number(stored.hourlyTarget) || fallback.hourlyTarget
+        };
+      }
     } catch { /* ignore */ }
     return fallback;
   },
 
-  async saveTargets(date, dailyTarget, hourlyTarget) {
+  async saveTargets(date, highCutTarget, dropCutTarget, hourlyTarget) {
+    const high = Number(highCutTarget);
+    const drop = Number(dropCutTarget);
+    const hourly = Number(hourlyTarget);
     const payload = {
-      dailyTarget: Number(dailyTarget),
-      hourlyTarget: Number(hourlyTarget)
+      highCutTarget: high,
+      dropCutTarget: drop,
+      dailyTarget: high + drop,
+      hourlyTarget: hourly
     };
     if (this.isCloud() && this._client) {
       try {
@@ -233,6 +270,8 @@ const DataStore = {
           date,
           daily_target: payload.dailyTarget,
           hourly_target: payload.hourlyTarget,
+          high_cut_target: payload.highCutTarget,
+          drop_cut_target: payload.dropCutTarget,
           updated_at: new Date().toISOString()
         });
       } catch { /* fallback local */ }

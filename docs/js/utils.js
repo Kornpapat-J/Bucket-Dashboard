@@ -182,6 +182,41 @@ function aggregateHourlyProductivity(production) {
   return rates;
 }
 
+function parseRecordCutType(note) {
+  if (!note) return null;
+  try {
+    const meta = JSON.parse(note);
+    return meta?.cutType === 'highCut' || meta?.cutType === 'dropCut' ? meta.cutType : null;
+  } catch {
+    return null;
+  }
+}
+
+function sumProductionByCutType(production) {
+  const totals = { highCut: 0, dropCut: 0 };
+  production.forEach(r => {
+    const cut = parseRecordCutType(r.note);
+    const vol = r.volumeBCM || 0;
+    if (cut === 'highCut') totals.highCut += vol;
+    else if (cut === 'dropCut') totals.dropCut += vol;
+  });
+  return totals;
+}
+
+function getCutTargets(config = {}) {
+  const high = Number(config.highCutTarget);
+  const drop = Number(config.dropCutTarget);
+  if (high > 0 || drop > 0) {
+    return {
+      highCutTarget: high > 0 ? high : 0,
+      dropCutTarget: drop > 0 ? drop : 0
+    };
+  }
+  const daily = Number(config.dailyTarget) || 5000;
+  const half = Math.round(daily / 2);
+  return { highCutTarget: half, dropCutTarget: daily - half };
+}
+
 function aggregateHourly(production) {
   const map = {};
   production.forEach(r => {

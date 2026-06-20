@@ -1,6 +1,6 @@
 /* global Chart, API, DataStore, Auth, showToast, formatDateTH, toISODate, calcDuration, formatDuration, filterByShift,
    aggregateHourly, aggregateHourlyProductivity, getHourLabels, hourLabelToNum, calcWorkingHours, sumByBucket,
-   sumDowntimeByBucket, sumDowntimeByType, getBucketColor, fmtNum, DT_TYPES */
+   sumDowntimeByBucket, sumDowntimeByType, getBucketColor, fmtNum, DT_TYPES, sumProductionByCutType, getCutTargets */
 
 let state = {
   date: toISODate(new Date()),
@@ -52,26 +52,30 @@ function renderAll() {
 }
 
 function updateTargetDisplay() {
-  const daily = state.config.dailyTarget || 5000;
+  const cuts = getCutTargets(state.config);
   const hourly = state.config.hourlyTarget || 400;
-  const dailyEl = document.getElementById('dailyTarget');
+  const highEl = document.getElementById('highCutTargetView');
+  const dropEl = document.getElementById('dropCutTargetView');
   const hourlyEl = document.getElementById('hourlyTargetView');
   const dateEl = document.getElementById('targetDateView');
-  if (dailyEl) dailyEl.textContent = fmtNum(daily);
+  if (highEl) highEl.textContent = fmtNum(cuts.highCutTarget);
+  if (dropEl) dropEl.textContent = fmtNum(cuts.dropCutTarget);
   if (hourlyEl) hourlyEl.textContent = fmtNum(hourly);
   if (dateEl) dateEl.textContent = formatDateTH(state.date);
 }
 
 function openTargetEditor() {
   if (!Auth.isAdmin()) return;
+  const cuts = getCutTargets(state.config);
   document.getElementById('targetView').hidden = true;
   document.getElementById('targetEditor').hidden = false;
   const hint = document.getElementById('targetHint');
   if (hint) hint.hidden = true;
   document.getElementById('targetDateLabel').textContent = formatDateTH(state.date);
-  document.getElementById('inputDailyTarget').value = state.config.dailyTarget || 5000;
+  document.getElementById('inputHighCutTarget').value = cuts.highCutTarget;
+  document.getElementById('inputDropCutTarget').value = cuts.dropCutTarget;
   document.getElementById('inputHourlyTarget').value = state.config.hourlyTarget || 400;
-  document.getElementById('inputDailyTarget').focus();
+  document.getElementById('inputHighCutTarget').focus();
 }
 
 function closeTargetEditor() {
@@ -82,10 +86,15 @@ function closeTargetEditor() {
 }
 
 async function saveTargetEditor() {
-  const daily = parseFloat(document.getElementById('inputDailyTarget').value);
+  const high = parseFloat(document.getElementById('inputHighCutTarget').value);
+  const drop = parseFloat(document.getElementById('inputDropCutTarget').value);
   const hourly = parseFloat(document.getElementById('inputHourlyTarget').value);
-  if (!daily || daily <= 0) {
-    showToast('กรุณากรอกเป้า BCM/วัน', true);
+  if (!high || high <= 0) {
+    showToast('กรุณากรอกเป้า High Cut BCM/วัน', true);
+    return;
+  }
+  if (!drop || drop <= 0) {
+    showToast('กรุณากรอกเป้า Drop Cut BCM/วัน', true);
     return;
   }
   if (!hourly || hourly <= 0) {
@@ -93,9 +102,11 @@ async function saveTargetEditor() {
     return;
   }
   try {
-    await DataStore.saveTargets(state.date, daily, hourly);
-    state.config.dailyTarget = daily;
-    state.config.hourlyTarget = hourly;
+    const saved = await DataStore.saveTargets(state.date, high, drop, hourly);
+    state.config.highCutTarget = saved.highCutTarget;
+    state.config.dropCutTarget = saved.dropCutTarget;
+    state.config.dailyTarget = saved.dailyTarget;
+    state.config.hourlyTarget = saved.hourlyTarget;
     closeTargetEditor();
     renderBarChart();
     renderPieChart();
@@ -466,7 +477,9 @@ function renderPieChart() {
   const total = values.reduce((s, v) => s + v, 0);
   const workHrs = calcWorkingHours(prod);
   const productivity = workHrs > 0 ? Math.round(total / workHrs) : 0;
-  const target = state.config.dailyTarget || 5000;
+  const cuts = getCutTargets(state.config);
+  const byCut = sumProductionByCutType(prod);
+  const totalTarget = cuts.highCutTarget + cuts.dropCutTarget;
 
   document.getElementById('totalProduction').textContent = total > 0 ? `${fmtNum(total)} BCM` : '—';
   document.getElementById('workingHours').textContent = workHrs > 0 ? `${workHrs.toFixed(1)} Hr.` : '—';
@@ -479,7 +492,10 @@ function renderPieChart() {
 
   const ctx = document.getElementById('pieChart');
   if (state.charts.pie) state.charts.pie.destroy();
-  if (buckets.length === 0) return;
+  if (buckets.length === 0) {
+    renderDonut(byCut, cuts, totalTarget);
+    return;
+  }
 
   state.charts.pie = new Chart(ctx, {
     type: 'doughnut',
@@ -500,19 +516,35 @@ function renderPieChart() {
     }
   });
 
-  renderDonut(total, target);
+  renderDonut(byCut, cuts, totalTarget);
 }
 
-function renderDonut(actual, target) {
-  const pct = target > 0 ? Math.min(100, (actual / target) * 100) : 0;
-  const gap = target - actual;
+function formatRemainingGap(gap) {
+  if (gap > 0) return `${fmtNum(gap)} BCM BELOW TARGET`;
+  if (gap < 0) return `${fmtNum(Math.abs(gap))} BCM ABOVE TARGET`;
+  return 'ON TARGET';
+}
+
+function setRemainingEl(el, gap) {
+  if (!el) return;
+  el.textContent = formatRemainingGap(gap);
+  el.className = 'donut-stat-val ' + (gap > 0 ? 'red' : gap < 0 ? 'green' : 'orange');
+}
+
+function renderDonut(byCut, cuts, totalTarget) {
+  const actualHigh = byCut.highCut;
+  const actualDrop = byCut.dropCut;
+  const actualTotal = actualHigh + actualDrop;
+  const pct = totalTarget > 0 ? Math.min(100, (actualTotal / totalTarget) * 100) : 0;
+  const gapHigh = cuts.highCutTarget - actualHigh;
+  const gapDrop = cuts.dropCutTarget - actualDrop;
 
   document.getElementById('donutPct').textContent = `${pct.toFixed(1)}%`;
-  document.getElementById('donutActual').textContent = `${fmtNum(actual)} BCM`;
-  document.getElementById('donutTarget').textContent = `${fmtNum(target)} BCM`;
-  const gapEl = document.getElementById('donutGap');
-  gapEl.textContent = gap > 0 ? `${fmtNum(gap)} BCM BELOW TARGET` : `${fmtNum(Math.abs(gap))} BCM ABOVE TARGET`;
-  gapEl.className = 'donut-stat-val ' + (gap > 0 ? 'red' : 'green');
+  document.getElementById('donutActual').textContent = `${fmtNum(actualTotal)} BCM`;
+  document.getElementById('donutTarget').textContent =
+    `${fmtNum(cuts.highCutTarget)} + ${fmtNum(cuts.dropCutTarget)} BCM`;
+  setRemainingEl(document.getElementById('donutGapHigh'), gapHigh);
+  setRemainingEl(document.getElementById('donutGapDrop'), gapDrop);
 
   const ctx = document.getElementById('donutChart');
   if (state.charts.donut) state.charts.donut.destroy();
