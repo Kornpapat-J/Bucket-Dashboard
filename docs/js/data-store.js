@@ -187,53 +187,30 @@ const DataStore = {
 
   async getByDate(date) {
     const all = await this.getData();
-    const targetsByShift = await this.getAllShiftTargets(date, all.config || {});
-    const dayCuts = getCutTargets(targetsByShift.day);
+    const targets = await this.getTargets(date, all.config || {});
+    const cutTargets = getCutTargets({ ...all.config, ...targets });
     return {
       config: {
         ...all.config,
-        targetsByShift,
-        ...dayCuts,
-        dailyTarget: dayCuts.highCutTarget + dayCuts.dropCutTarget
+        ...targets,
+        ...cutTargets,
+        dailyTarget: cutTargets.highCutTarget + cutTargets.dropCutTarget
       },
       production: all.production.filter(r => r.date === date),
       downtime: all.downtime.filter(r => r.date === date)
     };
   },
 
-  _normalizeTargetsEntry(entry) {
+  _flattenTargetsEntry(entry) {
     if (!entry || typeof entry !== 'object') return null;
-    if (entry.day || entry.night) {
-      return {
-        day: entry.day || entry,
-        night: entry.night || entry
-      };
+    if (entry.highCutTarget != null || entry.dailyTarget != null || entry.hourlyTarget != null) {
+      return entry;
     }
-    return { day: { ...entry }, night: { ...entry } };
+    if (entry.day || entry.night) return entry.day || entry.night;
+    return entry;
   },
 
-  _readLocalTargetsStore() {
-    try {
-      const raw = JSON.parse(localStorage.getItem(TARGETS_LOCAL_KEY) || '{}');
-      const out = {};
-      Object.keys(raw).forEach(date => {
-        const norm = this._normalizeTargetsEntry(raw[date]);
-        if (norm) out[date] = norm;
-      });
-      return out;
-    } catch {
-      return {};
-    }
-  },
-
-  async getAllShiftTargets(date, defaultCfg = {}) {
-    const day = await this.getTargets(date, 'day', defaultCfg);
-    const night = await this.getTargets(date, 'night', defaultCfg);
-    return { day, night };
-  },
-
-  async getTargets(date, shift = 'day', defaultCfg = {}) {
-    const shiftKey = shift === 'night' ? 'night' : 'day';
+  async getTargets(date, defaultCfg = {}) {
     const cutDefaults = getCutTargets(defaultCfg);
     const fallback = {
       highCutTarget: cutDefaults.highCutTarget,
@@ -245,9 +222,8 @@ const DataStore = {
       try {
         const { data, error } = await this._client
           .from('daily_targets')
-          .select('daily_target, hourly_target, high_cut_target, drop_cut_target, shift')
+          .select('daily_target, hourly_target, high_cut_target, drop_cut_target')
           .eq('date', date)
-          .eq('shift', shiftKey)
           .maybeSingle();
         if (!error && data) {
           const high = Number(data.high_cut_target);
@@ -271,23 +247,24 @@ const DataStore = {
         }
       } catch { /* table อาจยังไม่ได้สร้าง */ }
     }
-    const all = this._readLocalTargetsStore();
-    const entry = all[date]?.[shiftKey];
-    if (entry) {
-      const cut = getCutTargets(entry);
-      return {
-        ...entry,
-        ...cut,
-        dailyTarget: cut.highCutTarget + cut.dropCutTarget,
-        hourlyTarget: Number(entry.hourlyTarget) || fallback.hourlyTarget
-      };
-    }
+    try {
+      const all = JSON.parse(localStorage.getItem(TARGETS_LOCAL_KEY) || '{}');
+      if (all[date]) {
+        const stored = this._flattenTargetsEntry(all[date]);
+        const cut = getCutTargets(stored);
+        return {
+          ...stored,
+          ...cut,
+          dailyTarget: cut.highCutTarget + cut.dropCutTarget,
+          hourlyTarget: Number(stored.hourlyTarget) || fallback.hourlyTarget
+        };
+      }
+    } catch { /* ignore */ }
     return fallback;
   },
 
-  async saveTargets(date, shift, highCutTarget, dropCutTarget) {
-    const shiftKey = shift === 'night' ? 'night' : 'day';
-    const existing = await this.getTargets(date, shiftKey, {});
+  async saveTargets(date, highCutTarget, dropCutTarget) {
+    const existing = await this.getTargets(date, {});
     const high = Number(highCutTarget);
     const drop = Number(dropCutTarget);
     const payload = {
@@ -300,18 +277,16 @@ const DataStore = {
       try {
         await this._client.from('daily_targets').upsert({
           date,
-          shift: shiftKey,
           daily_target: payload.dailyTarget,
           hourly_target: payload.hourlyTarget,
           high_cut_target: payload.highCutTarget,
           drop_cut_target: payload.dropCutTarget,
           updated_at: new Date().toISOString()
-        }, { onConflict: 'date,shift' });
+        });
       } catch { /* fallback local */ }
     }
-    const all = this._readLocalTargetsStore();
-    if (!all[date]) all[date] = { day: null, night: null };
-    all[date][shiftKey] = payload;
+    const all = JSON.parse(localStorage.getItem(TARGETS_LOCAL_KEY) || '{}');
+    all[date] = payload;
     localStorage.setItem(TARGETS_LOCAL_KEY, JSON.stringify(all));
     return payload;
   },

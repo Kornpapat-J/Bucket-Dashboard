@@ -230,31 +230,6 @@ function getCutTargets(config = {}) {
   return { highCutTarget: half, dropCutTarget: daily - half };
 }
 
-function mergeShiftCutTargets(targetsByShift = {}, fallbackCfg = {}) {
-  const day = getCutTargets(targetsByShift.day || fallbackCfg);
-  const night = getCutTargets(targetsByShift.night || fallbackCfg);
-  return {
-    highCutTarget: day.highCutTarget + night.highCutTarget,
-    dropCutTarget: day.dropCutTarget + night.dropCutTarget
-  };
-}
-
-function getCutTargetsForShift(targetsByShift = {}, shift, fallbackCfg = {}) {
-  if (shift === 'all') return mergeShiftCutTargets(targetsByShift, fallbackCfg);
-  const key = shift === 'night' ? 'night' : 'day';
-  return getCutTargets(targetsByShift[key] || fallbackCfg);
-}
-
-function getShiftTargetLabel(shift) {
-  if (shift === 'night') return '🌙 Night Shift';
-  if (shift === 'day') return '☀️ Day Shift';
-  return '☀️ + 🌙 All Shifts';
-}
-
-function canEditShiftTarget(shift) {
-  return shift === 'day' || shift === 'night';
-}
-
 function aggregateHourly(production) {
   const map = {};
   production.forEach(r => {

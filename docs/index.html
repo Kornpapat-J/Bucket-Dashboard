@@ -6,7 +6,7 @@
   <title>Bucket Excavation Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=20260621h">
+  <link rel="stylesheet" href="css/styles.css?v=20260621i">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -121,8 +121,8 @@
               <div class="target-panel" id="targetCard">
                 <div class="target-panel-body" id="targetView">
                   <div class="target-panel-top">
-                    <span class="target-panel-tag">Target / Shift</span>
-                    <span class="target-panel-date" id="targetDateView"></span>
+                    <span class="target-panel-tag">Target</span>
+                    <span class="target-panel-date" id="targetDateView">Shift line</span>
                     <button type="button" class="target-edit-btn" id="btnEditTarget" title="แก้ไข Target">✎</button>
                   </div>
                   <div class="target-panel-metrics target-panel-metrics--cuts">
@@ -135,21 +135,19 @@
                       <span class="target-metric-val" id="dropCutTargetView">2,500</span>
                     </div>
                   </div>
-                  <p class="target-shift-note target-shift-note--view">เป้าหมายต่อ 1 Shift line (BCM)</p>
                 </div>
                 <div class="target-panel-body target-panel-edit" id="targetEditor" hidden>
                   <div class="target-panel-top">
-                    <span class="target-panel-tag">Target / Shift</span>
-                    <span class="target-panel-date" id="targetDateLabel"></span>
+                    <span class="target-panel-tag">Target</span>
+                    <span class="target-panel-date" id="targetDateLabel">Shift line</span>
                   </div>
-                  <p class="target-shift-note">เป้าหมายต่อ 1 Shift line (BCM)</p>
                   <div class="target-editor-fields target-editor-fields--cuts">
                     <label class="target-field">
-                      <span>High Cut BCM/Shift</span>
+                      <span>High Cut BCM/Shift line</span>
                       <input type="number" id="inputHighCutTarget" min="0" step="100" placeholder="2500">
                     </label>
                     <label class="target-field">
-                      <span>Drop Cut BCM/Shift</span>
+                      <span>Drop Cut BCM/Shift line</span>
                       <input type="number" id="inputDropCutTarget" min="0" step="100" placeholder="2500">
                     </label>
                   </div>
@@ -231,9 +229,9 @@
   <script src="js/supabase-config.js"></script>
   <script src="js/auth-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/utils.js?v=20260621h"></script>
-  <script src="js/data-store.js?v=20260621h"></script>
+  <script src="js/utils.js?v=20260621i"></script>
+  <script src="js/data-store.js?v=20260621i"></script>
   <script src="js/auth.js"></script>
-  <script src="js/dashboard.js?v=20260621h"></script>
+  <script src="js/dashboard.js?v=20260621i"></script>
 </body>
 </html>
