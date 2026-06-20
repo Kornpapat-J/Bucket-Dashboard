@@ -353,14 +353,25 @@ body {
 }
 .pie-title .ith-ico { color: var(--ith-orange-light); width: 1.2em; height: 1.2em; }
 .pie-body {
-  display: flex;
-  gap: 10px;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  gap: 6px 8px;
+  align-items: start;
   padding: 10px 10px 6px;
 }
+.pie-legend {
+  grid-column: 1 / -1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 .pie-wrap {
-  width: 100px;
-  height: 100px;
+  width: 88px;
+  height: 88px;
+  grid-column: 1;
+  grid-row: 2;
   flex-shrink: 0;
   position: relative;
   border-radius: 50%;
@@ -368,8 +379,8 @@ body {
   box-shadow: inset 0 0 0 3px rgba(232, 119, 34, 0.2), 0 2px 8px rgba(232, 119, 34, 0.12);
 }
 .pie-wrap canvas { position: absolute; top: 0; left: 0; width: 100% !important; height: 100% !important; }
-.pie-right { flex: 2; display: flex; flex-direction: column; gap: 4px; min-width: 0; width: 100%; }
-.pie-legend-item { display: flex; flex-direction: column; gap: 2px; font-size: 0.8rem; font-weight: 700; padding: 5px 6px; border-radius: 5px; background: rgba(255,255,255,0.7); margin-bottom: 4px; }
+.pie-right { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; gap: 4px; min-width: 0; width: 100%; }
+.pie-legend-item { display: flex; flex-direction: column; gap: 2px; font-size: 0.8rem; font-weight: 700; padding: 6px 8px; border-radius: 5px; background: rgba(255,255,255,0.7); width: 100%; box-sizing: border-box; }
 .pie-legend-main { display: flex; align-items: center; justify-content: space-between; }
 .pie-legend-coils {
   display: flex;
@@ -1575,16 +1586,24 @@ body {
 @media (max-width: 900px) {
   .pie-card.card { overflow: visible; }
   .pie-body {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 10px;
+  }
+  .pie-legend {
+    grid-column: 1;
+    grid-row: 1;
   }
   .pie-wrap {
-    width: 110px;
-    height: 110px;
+    grid-column: 1;
+    grid-row: 2;
+    width: 100px;
+    height: 100px;
     margin: 0 auto;
   }
   .pie-right {
+    grid-column: 1;
+    grid-row: 3;
     width: 100%;
     min-width: 0;
   }
