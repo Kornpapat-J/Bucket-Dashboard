@@ -53,14 +53,11 @@ function renderAll() {
 
 function updateTargetDisplay() {
   const cuts = getCutTargets(state.config);
-  const hourly = state.config.hourlyTarget || 400;
   const highEl = document.getElementById('highCutTargetView');
   const dropEl = document.getElementById('dropCutTargetView');
-  const hourlyEl = document.getElementById('hourlyTargetView');
   const dateEl = document.getElementById('targetDateView');
   if (highEl) highEl.textContent = fmtNum(cuts.highCutTarget);
   if (dropEl) dropEl.textContent = fmtNum(cuts.dropCutTarget);
-  if (hourlyEl) hourlyEl.textContent = fmtNum(hourly);
   if (dateEl) dateEl.textContent = formatDateTH(state.date);
 }
 
@@ -74,7 +71,6 @@ function openTargetEditor() {
   document.getElementById('targetDateLabel').textContent = formatDateTH(state.date);
   document.getElementById('inputHighCutTarget').value = cuts.highCutTarget;
   document.getElementById('inputDropCutTarget').value = cuts.dropCutTarget;
-  document.getElementById('inputHourlyTarget').value = state.config.hourlyTarget || 400;
   document.getElementById('inputHighCutTarget').focus();
 }
 
@@ -88,7 +84,6 @@ function closeTargetEditor() {
 async function saveTargetEditor() {
   const high = parseFloat(document.getElementById('inputHighCutTarget').value);
   const drop = parseFloat(document.getElementById('inputDropCutTarget').value);
-  const hourly = parseFloat(document.getElementById('inputHourlyTarget').value);
   if (!high || high <= 0) {
     showToast('กรุณากรอกเป้า High Cut BCM/วัน', true);
     return;
@@ -97,16 +92,11 @@ async function saveTargetEditor() {
     showToast('กรุณากรอกเป้า Drop Cut BCM/วัน', true);
     return;
   }
-  if (!hourly || hourly <= 0) {
-    showToast('กรุณากรอกเป้า BCM/ชม.', true);
-    return;
-  }
   try {
-    const saved = await DataStore.saveTargets(state.date, high, drop, hourly);
+    const saved = await DataStore.saveTargets(state.date, high, drop);
     state.config.highCutTarget = saved.highCutTarget;
     state.config.dropCutTarget = saved.dropCutTarget;
     state.config.dailyTarget = saved.dailyTarget;
-    state.config.hourlyTarget = saved.hourlyTarget;
     closeTargetEditor();
     renderBarChart();
     renderPieChart();

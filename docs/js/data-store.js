@@ -254,15 +254,15 @@ const DataStore = {
     return fallback;
   },
 
-  async saveTargets(date, highCutTarget, dropCutTarget, hourlyTarget) {
+  async saveTargets(date, highCutTarget, dropCutTarget) {
+    const existing = await this.getTargets(date, {});
     const high = Number(highCutTarget);
     const drop = Number(dropCutTarget);
-    const hourly = Number(hourlyTarget);
     const payload = {
       highCutTarget: high,
       dropCutTarget: drop,
       dailyTarget: high + drop,
-      hourlyTarget: hourly
+      hourlyTarget: Number(existing.hourlyTarget) || 400
     };
     if (this.isCloud() && this._client) {
       try {

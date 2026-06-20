@@ -444,7 +444,7 @@ body {
   gap: 6px;
 }
 .target-panel-metrics--cuts {
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
 }
 .target-metric {
   border-radius: 8px;
@@ -502,7 +502,7 @@ body {
   margin-bottom: 8px;
 }
 .target-editor-fields--cuts {
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
 }
 .target-field {
   display: flex;
