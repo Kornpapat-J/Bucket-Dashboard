@@ -1,6 +1,6 @@
 /* global Chart, API, DataStore, Auth, showToast, formatDateTH, toISODate, calcDuration, formatDuration, filterByShift,
    aggregateHourly, aggregateHourlyProductivity, getHourLabels, hourLabelToNum, calcWorkingHours, sumByBucket,
-   sumDowntimeByBucket, sumDowntimeByType, getBucketColor, fmtNum, DT_TYPES, sumProductionByCutType, getCutTargets */
+   sumDowntimeByBucket, sumDowntimeByType, getBucketColor, fmtNum, DT_TYPES, sumProductionByCutType, getCutTargets, countCoilsByBucket */
 
 let state = {
   date: toISODate(new Date()),
@@ -476,9 +476,23 @@ function renderPieChart() {
   document.getElementById('productivityTotal').textContent = productivity > 0 ? `${fmtNum(productivity)} BCM/Hr` : '—';
 
   const legendEl = document.getElementById('pieLegend');
-  legendEl.innerHTML = buckets.map((b, i) =>
-    `<div class="pie-legend-item"><span class="pie-legend-left"><span class="pie-legend-dot" style="background:${getBucketColor(b, state.config.buckets || buckets)}"></span>${b}</span><span>${fmtNum(byBucket[b])} BCM</span></div>`
-  ).join('') || '<div class="dt-empty">ไม่มีข้อมูล</div>';
+  const coilsByBucket = countCoilsByBucket(prod);
+  legendEl.innerHTML = buckets.map(b => {
+    const coils = coilsByBucket[b] || { total: 0, highCut: 0, dropCut: 0 };
+    return `<div class="pie-legend-item">
+      <div class="pie-legend-main">
+        <span class="pie-legend-left"><span class="pie-legend-dot" style="background:${getBucketColor(b, state.config.buckets || buckets)}"></span>${b}</span>
+        <span>${fmtNum(byBucket[b])} BCM</span>
+      </div>
+      <div class="pie-legend-coils">
+        <span>ขดรวม <strong>${fmtNum(coils.total)}</strong></span>
+        <span class="pie-legend-coils-sep">·</span>
+        <span>High Cut <strong>${fmtNum(coils.highCut)}</strong></span>
+        <span class="pie-legend-coils-sep">·</span>
+        <span>Drop Cut <strong>${fmtNum(coils.dropCut)}</strong></span>
+      </div>
+    </div>`;
+  }).join('') || '<div class="dt-empty">ไม่มีข้อมูล</div>';
 
   const ctx = document.getElementById('pieChart');
   if (state.charts.pie) state.charts.pie.destroy();

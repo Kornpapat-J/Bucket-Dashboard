@@ -369,7 +369,20 @@ body {
 }
 .pie-wrap canvas { position: absolute; top: 0; left: 0; width: 100% !important; height: 100% !important; }
 .pie-right { flex: 2; display: flex; flex-direction: column; gap: 4px; min-width: 0; width: 100%; }
-.pie-legend-item { display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; font-weight: 700; padding: 4px 6px; border-radius: 5px; background: rgba(255,255,255,0.7); margin-bottom: 2px; }
+.pie-legend-item { display: flex; flex-direction: column; gap: 2px; font-size: 0.8rem; font-weight: 700; padding: 5px 6px; border-radius: 5px; background: rgba(255,255,255,0.7); margin-bottom: 4px; }
+.pie-legend-main { display: flex; align-items: center; justify-content: space-between; }
+.pie-legend-coils {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--ith-gray);
+  padding-left: 16px;
+}
+.pie-legend-coils strong { color: var(--ith-gray-dark); font-weight: 800; }
+.pie-legend-coils-sep { color: #d0d5dd; }
 .pie-legend-left { display: flex; align-items: center; gap: 6px; color: var(--ith-gray-dark); }
 .pie-legend-dot { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
 
