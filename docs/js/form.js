@@ -92,6 +92,84 @@ function getLevelDims(level) {
   };
 }
 
+function fillTime24Select(select, max) {
+  select.innerHTML = '<option value="">--</option>';
+  for (let i = 0; i <= max; i++) {
+    const v = String(i).padStart(2, '0');
+    select.add(new Option(v, v));
+  }
+}
+
+function syncTime24Picker(picker) {
+  const hourSel = picker.querySelector('.time-24h-hour');
+  const minSel = picker.querySelector('.time-24h-min');
+  const hidden = picker.querySelector('input[type="hidden"]');
+  if (!hourSel || !minSel || !hidden) return;
+  hidden.value = (hourSel.value && minSel.value) ? `${hourSel.value}:${minSel.value}` : '';
+  hidden.dispatchEvent(new Event('change', { bubbles: true }));
+  hidden.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function setTime24Value(inputId, time) {
+  const hidden = document.getElementById(inputId);
+  if (!hidden) return;
+  const picker = hidden.closest('.time-24h-picker');
+  if (!picker) {
+    hidden.value = time || '';
+    return;
+  }
+  const hourSel = picker.querySelector('.time-24h-hour');
+  const minSel = picker.querySelector('.time-24h-min');
+  if (!time) {
+    hourSel.value = '';
+    minSel.value = '';
+  } else {
+    const [h, m] = time.split(':');
+    const hi = parseInt(h, 10);
+    const mi = parseInt(m || 0, 10);
+    if (isNaN(hi) || isNaN(mi) || hi < 0 || hi > 23 || mi < 0 || mi > 59) {
+      hourSel.value = '';
+      minSel.value = '';
+    } else {
+      hourSel.value = String(hi).padStart(2, '0');
+      minSel.value = String(mi).padStart(2, '0');
+    }
+  }
+  syncTime24Picker(picker);
+}
+
+function setTime24Disabled(inputId, disabled) {
+  const hidden = document.getElementById(inputId);
+  const picker = hidden?.closest('.time-24h-picker');
+  if (!picker) return;
+  picker.classList.toggle('is-disabled', disabled);
+  picker.querySelectorAll('select').forEach(s => { s.disabled = disabled; });
+  if (disabled) setTime24Value(inputId, '');
+}
+
+function setupTime24Pickers() {
+  document.querySelectorAll('.time-24h-picker').forEach(picker => {
+    const hourSel = picker.querySelector('.time-24h-hour');
+    const minSel = picker.querySelector('.time-24h-min');
+    if (!hourSel || !minSel || hourSel.options.length > 1) return;
+    fillTime24Select(hourSel, 23);
+    fillTime24Select(minSel, 59);
+    const onChange = () => syncTime24Picker(picker);
+    hourSel.addEventListener('change', onChange);
+    minSel.addEventListener('change', onChange);
+  });
+
+  document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('reset', () => {
+      setTimeout(() => {
+        form.querySelectorAll('.time-24h-picker input[type="hidden"]').forEach(hidden => {
+          setTime24Value(hidden.id, hidden.value);
+        });
+      }, 0);
+    });
+  });
+}
+
 function hourNoFromStartTime(startTime, shift) {
   const startMin = parseTime(startTime);
   if (startMin == null) return null;
@@ -198,10 +276,8 @@ function setupTabs() {
 
 function setupOngoingToggle() {
   const chk = document.getElementById('dtOngoing');
-  const endInput = document.getElementById('dtEndTime');
   chk.addEventListener('change', () => {
-    endInput.disabled = chk.checked;
-    if (chk.checked) endInput.value = '';
+    setTime24Disabled('dtEndTime', chk.checked);
   });
 }
 
@@ -315,7 +391,7 @@ async function submitDowntime(e) {
     }
     form.description.value = '';
     form.ongoing.checked = false;
-    form.endTime.disabled = false;
+    setTime24Disabled('dtEndTime', false);
     const allData = await API.getData();
     cachedData = allData;
     loadRecentRecords(allData);
@@ -391,6 +467,8 @@ function fillProductionForm(record) {
   form.smuEnd.value = meta?.smuEnd ?? '';
   form.startTime.value = record.startTime || '';
   form.endTime.value = record.endTime || '';
+  setTime24Value('prodStart', record.startTime);
+  setTime24Value('prodEnd', record.endTime);
   form.operatorName.value = record.operatorName || '';
   form.recordedBy.value = record.location || '';
   syncHourNoFromTime();
@@ -405,8 +483,9 @@ function fillDowntimeForm(record) {
   form.type.value = record.type;
   form.startTime.value = record.startTime || '';
   form.ongoing.checked = !!record.ongoing;
-  form.endTime.disabled = !!record.ongoing;
-  form.endTime.value = record.ongoing ? '' : (record.endTime || '');
+  setTime24Value('dtStart', record.startTime);
+  setTime24Disabled('dtEndTime', !!record.ongoing);
+  setTime24Value('dtEndTime', record.ongoing ? '' : (record.endTime || ''));
   form.description.value = record.description || '';
 }
 
@@ -628,7 +707,7 @@ function setupEditCancel() {
     clearDowntimeEdit();
     document.getElementById('formDowntime')?.reset();
     document.getElementById('dtDate').value = toISODate(new Date());
-    document.getElementById('dtEndTime').disabled = false;
+    setTime24Disabled('dtEndTime', false);
     showToast('ยกเลิกการแก้ไข');
   });
   document.getElementById('btnProdReset')?.addEventListener('click', () => {
@@ -642,7 +721,7 @@ function setupEditCancel() {
     setTimeout(() => {
       clearDowntimeEdit();
       document.getElementById('dtDate').value = toISODate(new Date());
-      document.getElementById('dtEndTime').disabled = false;
+      setTime24Disabled('dtEndTime', false);
     }, 0);
   });
 }
@@ -650,6 +729,7 @@ function setupEditCancel() {
 document.addEventListener('DOMContentLoaded', () => {
   setupTabs();
   setupOngoingToggle();
+  setupTime24Pickers();
   setupDowntimeTypeDefault();
   setupProductionCalc();
   syncHourNoFromTime();

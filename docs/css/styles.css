@@ -778,6 +778,48 @@ body {
 }
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--ith-orange); }
 .form-group textarea { min-height: 72px; resize: vertical; }
+
+.time-24h-hint {
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ith-gray);
+  font-size: 0.85em;
+}
+
+.time-24h-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.time-24h-picker select {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  font-family: "Chakra Petch", monospace;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  background: #fff;
+  color: var(--ith-charcoal);
+}
+
+.time-24h-picker select:focus {
+  outline: none;
+  border-color: var(--ith-orange);
+}
+
+.time-24h-sep {
+  font-family: "Chakra Petch", monospace;
+  font-weight: 700;
+  color: var(--ith-gray-dark);
+}
+
+.time-24h-picker.is-disabled {
+  opacity: 0.55;
+}
 .form-check { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
 .form-check input { width: 16px; height: 16px; }
 .form-actions { display: flex; gap: 8px; margin-top: 16px; }
