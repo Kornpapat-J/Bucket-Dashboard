@@ -2,6 +2,7 @@
 
 const BUCKETS = ['Bucket 1', 'Bucket 2'];
 const LEVELS = ['b1', 'b2', 'b3'];
+const PLAN_DOWNTIME_DESC = 'หยุดตรวจเช็คเครื่องจักรประจำวัน';
 
 let config = { buckets: BUCKETS };
 let activeTab = 'production';
@@ -202,6 +203,21 @@ function setupOngoingToggle() {
     endInput.disabled = chk.checked;
     if (chk.checked) endInput.value = '';
   });
+}
+
+function applyDowntimeTypeDefault() {
+  const typeEl = document.getElementById('dtType');
+  const descEl = document.getElementById('dtDesc');
+  if (!typeEl || !descEl) return;
+  if (typeEl.value === 'Plan') {
+    descEl.value = PLAN_DOWNTIME_DESC;
+  } else if (descEl.value === PLAN_DOWNTIME_DESC) {
+    descEl.value = '';
+  }
+}
+
+function setupDowntimeTypeDefault() {
+  document.getElementById('dtType')?.addEventListener('change', applyDowntimeTypeDefault);
 }
 
 async function submitProduction(e) {
@@ -634,6 +650,7 @@ function setupEditCancel() {
 document.addEventListener('DOMContentLoaded', () => {
   setupTabs();
   setupOngoingToggle();
+  setupDowntimeTypeDefault();
   setupProductionCalc();
   syncHourNoFromTime();
   setupRecentActions();
