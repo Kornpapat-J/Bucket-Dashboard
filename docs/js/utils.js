@@ -203,15 +203,15 @@ function sumProductionByCutType(production) {
   return totals;
 }
 
-function countCoilsByBucket(production) {
+function sumVolumeByBucketAndCutType(production) {
   const map = {};
   production.forEach(r => {
     const bucket = r.bucketId;
-    if (!map[bucket]) map[bucket] = { total: 0, highCut: 0, dropCut: 0 };
-    map[bucket].total += 1;
+    if (!map[bucket]) map[bucket] = { highCut: 0, dropCut: 0 };
+    const vol = r.volumeBCM || 0;
     const cut = parseRecordCutType(r.note);
-    if (cut === 'highCut') map[bucket].highCut += 1;
-    else if (cut === 'dropCut') map[bucket].dropCut += 1;
+    if (cut === 'highCut') map[bucket].highCut += vol;
+    else if (cut === 'dropCut') map[bucket].dropCut += vol;
   });
   return map;
 }
