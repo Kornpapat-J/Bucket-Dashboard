@@ -9,7 +9,7 @@
   <title>บันทึกข้อมูลการขุดดิน — Bucket Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=20260620d">
+  <link rel="stylesheet" href="css/styles.css?v=20260621d">
 </head>
 <body>
   <header class="top-bar">
@@ -84,8 +84,14 @@
                   </select>
                 </div>
                 <div class="form-group">
-                  <label for="prodHour">Hr. ที่</label>
-                  <input type="number" id="prodHour" name="hourNo" min="1" max="24" readonly tabindex="-1" title="คำนวณอัตโนมัติจากเวลาเริ่ม">
+                  <label for="prodHour">Hr. ที่ *</label>
+                  <div class="hour-stepper">
+                    <input type="number" id="prodHour" name="hourNo" min="1" max="24" step="1" inputmode="numeric" placeholder="—" required>
+                    <div class="hour-stepper-spin">
+                      <button type="button" class="hour-stepper-btn hour-stepper-up" aria-label="เพิ่มชั่วโมง">▲</button>
+                      <button type="button" class="hour-stepper-btn hour-stepper-down" aria-label="ลดชั่วโมง">▼</button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </section>
@@ -354,6 +360,6 @@
     }
   })();
   </script>
-  <script src="js/form.js?v=20260620d"></script>
+  <script src="js/form.js?v=20260621d"></script>
 </body>
 </html>

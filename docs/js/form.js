@@ -174,6 +174,52 @@ function setupTime24Pickers() {
   });
 }
 
+function clampHourNo(value) {
+  const n = parseInt(value, 10);
+  if (isNaN(n)) return null;
+  return Math.min(24, Math.max(1, n));
+}
+
+function setHourNoValue(value) {
+  const hourEl = document.getElementById('prodHour');
+  if (!hourEl) return;
+  const clamped = clampHourNo(value);
+  hourEl.value = clamped != null ? String(clamped) : '';
+}
+
+function suggestHourNoFromTime() {
+  const form = document.getElementById('formProduction');
+  const hourEl = document.getElementById('prodHour');
+  if (!form || !hourEl || hourEl.value) return;
+  const val = hourNoFromStartTime(form.startTime.value, form.shift.value);
+  if (val != null) hourEl.value = String(val);
+}
+
+function setupHourStepper() {
+  const hourEl = document.getElementById('prodHour');
+  if (!hourEl) return;
+
+  const step = delta => {
+    const cur = clampHourNo(hourEl.value) || 1;
+    setHourNoValue(cur + delta);
+  };
+
+  document.querySelector('.hour-stepper-up')?.addEventListener('click', () => step(1));
+  document.querySelector('.hour-stepper-down')?.addEventListener('click', () => step(-1));
+
+  hourEl.addEventListener('input', () => {
+    if (!hourEl.value) return;
+    const clamped = clampHourNo(hourEl.value);
+    if (clamped == null) hourEl.value = '';
+    else hourEl.value = String(clamped);
+  });
+
+  hourEl.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    step(e.deltaY < 0 ? 1 : -1);
+  }, { passive: false });
+}
+
 function hourNoFromStartTime(startTime, shift) {
   const startMin = parseTime(startTime);
   if (startMin == null) return null;
@@ -181,14 +227,6 @@ function hourNoFromStartTime(startTime, shift) {
   let slot = Math.floor(startMin / 60) - baseHour + 1;
   if (slot < 1) slot += 24;
   return Math.min(24, Math.max(1, slot));
-}
-
-function syncHourNoFromTime() {
-  const form = document.getElementById('formProduction');
-  const hourEl = document.getElementById('prodHour');
-  if (!form || !hourEl) return;
-  const val = hourNoFromStartTime(form.startTime.value, form.shift.value);
-  hourEl.value = val != null ? String(val) : '';
 }
 
 function updateCalculations() {
@@ -223,7 +261,7 @@ function updateCalculations() {
 function setupProductionCalc() {
   const onProdInput = () => {
     updateCalculations();
-    syncHourNoFromTime();
+    suggestHourNoFromTime();
   };
   document.querySelectorAll('.perf-dim, #smuStart, #smuEnd, #prodStart, #prodShift').forEach(el => {
     el.addEventListener('input', onProdInput);
@@ -232,7 +270,7 @@ function setupProductionCalc() {
   document.getElementById('formProduction')?.addEventListener('reset', () => {
     setTimeout(() => {
       updateCalculations();
-      syncHourNoFromTime();
+      suggestHourNoFromTime();
     }, 0);
   });
 }
@@ -274,8 +312,7 @@ function buildPerfNote(form) {
   const productionRate = smuTotal > 0 ? Math.round((totalProduct / smuTotal) * 100) / 100 : 0;
 
   return JSON.stringify({
-    hourNo: hourNoFromStartTime(form.startTime.value, form.shift.value)
-      ?? (parseInt(form.hourNo.value, 10) || null),
+    hourNo: clampHourNo(form.hourNo.value),
     levels,
     smuStart,
     smuEnd,
@@ -353,8 +390,10 @@ async function submitProduction(e) {
     showToast('กรุณากรอกเวลาเริ่มและเวลาจบ', true);
     return;
   }
-
-  syncHourNoFromTime();
+  if (!clampHourNo(form.hourNo.value)) {
+    showToast('กรุณาเลือก Hr. ที่ (1-24)', true);
+    return;
+  }
 
   try {
     if (editingProductionId) {
@@ -498,7 +537,6 @@ function fillProductionForm(record) {
   setTime24Value('prodEnd', record.endTime);
   form.operatorName.value = record.operatorName || '';
   form.recordedBy.value = record.location || '';
-  syncHourNoFromTime();
   updateCalculations();
 }
 
@@ -763,9 +801,9 @@ document.addEventListener('DOMContentLoaded', () => {
   setupOngoingToggle();
   setupTime24Pickers();
   setupDowntimeTypeDefault();
+  setupHourStepper();
   setupCutTypeCheckboxes();
   setupProductionCalc();
-  syncHourNoFromTime();
   setupRecentActions();
   setupRecentDateFilter();
   setupRecentBucketFilter();
