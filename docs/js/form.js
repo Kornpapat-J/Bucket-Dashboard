@@ -237,6 +237,24 @@ function setupProductionCalc() {
   });
 }
 
+function getCutTypeFromForm(form) {
+  if (form.highCut?.checked) return 'highCut';
+  if (form.dropCut?.checked) return 'dropCut';
+  return null;
+}
+
+function setupCutTypeCheckboxes() {
+  const high = document.getElementById('prodHighCut');
+  const drop = document.getElementById('prodDropCut');
+  if (!high || !drop) return;
+  high.addEventListener('change', () => {
+    if (high.checked) drop.checked = false;
+  });
+  drop.addEventListener('change', () => {
+    if (drop.checked) high.checked = false;
+  });
+}
+
 function parsePerfNote(note) {
   if (!note) return null;
   try { return JSON.parse(note); } catch { return null; }
@@ -262,7 +280,8 @@ function buildPerfNote(form) {
     smuStart,
     smuEnd,
     smuTotal,
-    productionRate
+    productionRate,
+    cutType: getCutTypeFromForm(form)
   });
 }
 
@@ -354,6 +373,8 @@ async function submitProduction(e) {
     form.smuStart.value = '';
     form.smuEnd.value = '';
     form.hourNo.value = '';
+    if (form.highCut) form.highCut.checked = false;
+    if (form.dropCut) form.dropCut.checked = false;
     updateCalculations();
     const allData = await API.getData();
     cachedData = allData;
@@ -461,6 +482,8 @@ function fillProductionForm(record) {
   const bucketRadio = form.querySelector(`input[name="bucketId"][value="${CSS.escape(record.bucketId)}"]`);
   if (bucketRadio) bucketRadio.checked = true;
   form.hourNo.value = meta?.hourNo ?? '';
+  if (form.highCut) form.highCut.checked = meta?.cutType === 'highCut';
+  if (form.dropCut) form.dropCut.checked = meta?.cutType === 'dropCut';
   LEVELS.forEach(lv => {
     const lvData = meta?.levels?.[lv];
     form[`${lv}Width`].value = lvData?.width ?? '';
@@ -506,10 +529,15 @@ function formatProdRecent(r) {
   const hour = (r.startTime && r.endTime)
     ? `${r.startTime.slice(0, 5)}-${r.endTime.slice(0, 5)}`
     : (meta?.hourNo ? `Hr.${meta.hourNo}` : '—');
+  const cutBadge = meta?.cutType === 'highCut'
+    ? '<span class="cut-type-badge cut-type-badge--high">High Cut</span>'
+    : meta?.cutType === 'dropCut'
+      ? '<span class="cut-type-badge cut-type-badge--drop">Drop Cut</span>'
+      : '';
   const canMutate = DataStore.canMutateRecord(r.id, 'production');
   return `<div class="recent-item">
     <div class="recent-item-main">
-      <span>${r.bucketId} — ${hour}</span>
+      <span>${r.bucketId} — ${hour} ${cutBadge}</span>
       <span>${fmtNum(r.volumeBCM)} BCM (${r.operatorName})</span>
     </div>
     ${recentActionsHtml(r.id, 'production', canMutate)}
@@ -735,6 +763,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupOngoingToggle();
   setupTime24Pickers();
   setupDowntimeTypeDefault();
+  setupCutTypeCheckboxes();
   setupProductionCalc();
   syncHourNoFromTime();
   setupRecentActions();

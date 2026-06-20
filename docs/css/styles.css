@@ -1248,6 +1248,56 @@ body {
   box-shadow: 0 2px 12px rgba(232, 119, 34, 0.2);
 }
 .bucket-pill:hover .bucket-pill-inner { border-color: var(--ith-orange-muted); }
+
+.cut-type-pills {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.cut-type-pill { cursor: pointer; }
+.cut-type-pill input { position: absolute; opacity: 0; pointer-events: none; }
+.cut-type-pill-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  font-family: "Chakra Petch", Arial, sans-serif;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--ith-charcoal);
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.cut-type-pill input:checked + .cut-type-pill-inner {
+  border-color: var(--ith-orange);
+  background: rgba(232, 135, 58, 0.1);
+  color: var(--ith-orange-dark);
+}
+.cut-type-pill:hover .cut-type-pill-inner { border-color: var(--ith-orange-muted); }
+
+.cut-type-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: "Chakra Petch", Arial, sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  vertical-align: middle;
+}
+.cut-type-badge--high {
+  background: rgba(232, 135, 58, 0.15);
+  color: var(--ith-orange-dark);
+  border: 1px solid rgba(232, 135, 58, 0.35);
+}
+.cut-type-badge--drop {
+  background: rgba(74, 79, 84, 0.1);
+  color: var(--ith-gray-dark);
+  border: 1px solid rgba(74, 79, 84, 0.25);
+}
 .perf-table-wrap {
   overflow-x: auto;
   border-radius: 10px;

@@ -9,7 +9,7 @@
   <title>บันทึกข้อมูลการขุดดิน — Bucket Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=20260620c">
+  <link rel="stylesheet" href="css/styles.css?v=20260620d">
 </head>
 <body>
   <header class="top-bar">
@@ -56,6 +56,19 @@
                     <label class="bucket-pill">
                       <input type="radio" name="bucketId" value="Bucket 2">
                       <span class="bucket-pill-inner"><span class="ith-ico ith-ico-bucket" aria-hidden="true"></span> Bucket 2</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="cut-type-pick full">
+                  <span class="field-label">ประเภทการขุด</span>
+                  <div class="cut-type-pills">
+                    <label class="cut-type-pill">
+                      <input type="checkbox" name="highCut" id="prodHighCut" value="1">
+                      <span class="cut-type-pill-inner">High Cut</span>
+                    </label>
+                    <label class="cut-type-pill">
+                      <input type="checkbox" name="dropCut" id="prodDropCut" value="1">
+                      <span class="cut-type-pill-inner">Drop Cut</span>
                     </label>
                   </div>
                 </div>
@@ -341,6 +354,6 @@
     }
   })();
   </script>
-  <script src="js/form.js?v=20260620c"></script>
+  <script src="js/form.js?v=20260620d"></script>
 </body>
 </html>
